@@ -1,3 +1,4 @@
+import React from "react";
 // Simple footer for the prototype.
 export default function Footer({ onFeedback }) {
   return (
