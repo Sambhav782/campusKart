@@ -1,3 +1,4 @@
+import React from "react";
 // Listing section: filtering, sorting and product cards.
 import { useMemo } from "react";
 import ProductCard from "./ProductCard";
