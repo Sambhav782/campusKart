@@ -1,3 +1,4 @@
+import React from "react";
 // Landing section with search and a small product preview.
 import { products } from "../data/products";
 
