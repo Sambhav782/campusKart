@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { products } from "./data/products";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
