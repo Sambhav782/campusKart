@@ -1,3 +1,4 @@
+import React from "react";
 // Category buttons used to filter marketplace listings.
 import { categories } from "../data/products";
 
