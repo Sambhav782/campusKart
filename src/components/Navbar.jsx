@@ -1,3 +1,4 @@
+import React from "react";
 // Top navigation and main actions.
 export default function Navbar({ onSell, onLogin, onNotify, onHome, onHowItWorks }) {
   return (
