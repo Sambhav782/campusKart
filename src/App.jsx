@@ -17,6 +17,7 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [toast, setToast] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
 
   // Show a short status message.
   const notify = (message) => {
@@ -50,13 +51,15 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={darkMode ? "app-shell dark-mode" : "app-shell"}>
       <Navbar
         onSell={() => setShowSell(true)}
         onLogin={() => setShowLogin(true)}
         onNotify={notify}
         onHome={resetHome}
         onHowItWorks={() => scrollTo("how-it-works")}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode((current) => !current)}
       />
 
       <main>
