@@ -1,3 +1,4 @@
+import React from "react";
 // Explains the three-step campus exchange flow.
 export default function TrustSection({ onSell }) {
   const steps = [
