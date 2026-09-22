@@ -1,3 +1,4 @@
+import React from "react";
 // Reusable modal shell plus listing and login forms.
 export function Modal({ title, onClose, children }) {
   return (
