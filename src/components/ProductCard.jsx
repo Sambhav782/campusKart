@@ -1,3 +1,4 @@
+import React from "react";
 // Reusable card for one marketplace listing.
 export default function ProductCard({ product, favorite, onFavorite, onOpen }) {
   const discount = Math.round((1 - product.price / product.oldPrice) * 100);
