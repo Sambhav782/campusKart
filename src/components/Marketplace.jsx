@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import { categories } from "../data/products";
 
+/** Homepage shows a small preview; Explore shows all listings and filters. */
+
 export default function Marketplace({
   products, activeCategory = "All", search = "", favorites = [], onFavorite, onOpen,
   onClear, limit, showFilters = true, onViewAll, pageTitle = "Explore listings",
@@ -11,6 +13,7 @@ export default function Marketplace({
   const [sortMode, setSortMode] = useState("Recommended");
   const [maxPrice, setMaxPrice] = useState("");
 
+  // Filtering and sorting operate on a copy, leaving source listings untouched.
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     const result = products.filter((product) =>
@@ -26,6 +29,7 @@ export default function Marketplace({
     return result;
   }, [products, activeCategory, search, condition, maxPrice, sortMode]);
 
+  // The homepage intentionally displays only a handful of popular listings.
   const visibleProducts = limit ? filtered.slice(0, limit) : filtered;
   const isPopular = !showFilters && Boolean(limit);
 
@@ -71,7 +75,7 @@ export default function Marketplace({
       {visibleProducts.length ? (
         <div className="product-grid">
           {visibleProducts.map((product) => (
-            <ProductCard key={product.id || product._id} product={product} favorite={favorites.includes(product.id || product._id)} onFavorite={onFavorite} onOpen={onOpen} />
+            <ProductCard key={product.id || product._id} product={product} favorite={favorites.map(String).includes(String(product.id || product._id))} onFavorite={onFavorite} onOpen={onOpen} />
           ))}
         </div>
       ) : (
