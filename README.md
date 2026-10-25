@@ -7,7 +7,7 @@ CampusKart is a campus-first marketplace prototype where students can discover a
 - Browse and search product listings; filter by category.
 - View product details and save favorites in the current browser.
 - Register and sign in using an email and password.
-- Create listings when signed in.
+- Create listings when signed in, with up to five item photos (5 MB each).
 - Store listings and user accounts in a local JSON file by default.
 - Use MongoDB when a valid `MONGODB_URI` is configured and the database is reachable.
 - Fall back to JSON storage if MongoDB is not configured or cannot connect.
