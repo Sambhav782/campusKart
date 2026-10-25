@@ -1778,7 +1778,8 @@ input,textarea,.form-grid select {
   padding-top: 16px;
 }
 
-.account-side-nav button, .account-side-nav a {
+.account-side-nav button,
+.account-side-nav a {
   display: flex;
   align-items: center;
   gap: 10px;
