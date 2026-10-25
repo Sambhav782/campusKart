@@ -78,7 +78,7 @@ export default function Navbar({
           </button>
 
           <button className="notification-btn" onClick={onNotifications} title="Notifications" aria-label={`Notifications${notificationCount ? `, ${notificationCount} unread` : ""}`}>
-            ♧{notificationCount > 0 && <span className="notification-count">{notificationCount > 9 ? "9+" : notificationCount}</span>}
+            🔔{notificationCount > 0 && <span className="notification-count">{notificationCount > 9 ? "9+" : notificationCount}</span>}
           </button>
           <button className="sell-btn sell-icon-btn" onClick={onSell} title="Sell an item" aria-label="Sell an item">＋</button>
 
