@@ -100,8 +100,10 @@ export default function ProfilePage({ user, cartProducts, myProducts = [], order
               <>
                 <div className="cart-list">{cartProducts.map((product) => <CartItem key={product.id || product._id} product={product} onRemove={onRemoveFromCart} onOpen={onOpenProduct} />)}</div>
                 <div className="cart-summary"><span>Estimated total</span><strong>₹{total.toLocaleString("en-IN")}</strong><small>This is an estimate only. No payment is taken in CampusKart.</small></div>
-                <button className="primary-btn" onClick={onBuyAll}>Buy all</button>
-                <button className="secondary-btn" onClick={onBrowse}>Continue browsing</button>
+                <div className="cart-footer-actions">
+                  <button className="primary-btn" onClick={onBuyAll}>Buy all</button>
+                  <button className="secondary-btn" onClick={onBrowse}>Continue browsing</button>
+                </div>
               </>
             ) : (
               <div className="cart-empty"><span>🛒</span><h3>Your cart is empty</h3><p>When you add an item, it will appear here.</p><button className="primary-btn" onClick={onBrowse}>Browse marketplace</button></div>
