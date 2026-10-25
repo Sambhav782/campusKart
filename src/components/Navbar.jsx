@@ -1,6 +1,6 @@
 import React from "react";
 // Top navigation and main actions.
-export default function Navbar({ onSell, onLogin, onProfile, onNotify, onHome, onHowItWorks, darkMode, onToggleDarkMode, user, cartCount = 0 }) {
+export default function Navbar({ onSell, onLogin, onProfile, onNotify, onHome, onHowItWorks, darkMode, onToggleDarkMode, user, cartCount = 0, search, setSearch, onSearch }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   return (
     <header className="navbar">
@@ -15,6 +15,13 @@ export default function Navbar({ onSell, onLogin, onProfile, onNotify, onHome, o
           <button onClick={onHowItWorks}>How it works</button>
           <button onClick={() => onNotify("Community features are coming next.")}>Community</button>
         </nav>
+
+        <form className="nav-search" role="search" onSubmit={(event) => { event.preventDefault(); onSearch(); }}>
+          <span aria-hidden="true">⌕</span>
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search listings..." aria-label="Search listings" />
+          {search && <button type="button" className="nav-search-clear" aria-label="Clear search" onClick={() => setSearch("")}>×</button>}
+          <button type="submit" className="nav-search-submit" aria-label="Show search results">Search</button>
+        </form>
 
         <div className="nav-actions">
           <button className="theme-btn" onClick={onToggleDarkMode} aria-label="Toggle dark mode">{darkMode ? "☀" : "☾"}</button>
