@@ -2949,3 +2949,39 @@ input,textarea,.form-grid select {
   }
 }
 
+/* Destructive account action sits below sign out in the account sidebar. */
+.delete-account-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 11px 10px;
+  border: 1px solid #f2c8cc;
+  border-radius: 10px;
+  color: #c6283d;
+  background: #fff8f8;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+.delete-account-btn span {
+  width: 20px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.delete-account-btn:hover {
+  background: #fff0f1;
+  border-color: #e8aab2;
+}
+.dark-mode .delete-account-btn {
+  color: #ff9ca8;
+  background: #2b1d29;
+  border-color: #663342;
+}
+.dark-mode .delete-account-btn:hover {
+  background: #3b202e;
+}
+
