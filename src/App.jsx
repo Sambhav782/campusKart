@@ -221,12 +221,16 @@ export default function App() {
     notify("Your listing has been published.");
   }
 
-  async function handleBuy(product) {
+  async function handleBuy(product, quantity = 1) {
     if (!user) { setShowLogin(true); notify("Sign in to buy this item."); return; }
     try {
-      const result = await apiRequest(`/orders/${encodeURIComponent(product.id || product._id)}`, { method: "POST" });
-      setCartProducts((current) => current.filter((item) => String(item.id || item._id) !== String(product.id || product._id)));
-      setProducts((current) => current.map((item) => String(item.id || item._id) === String(product.id || product._id) ? { ...item, status: "sold" } : item));
+      const result = await apiRequest(`/orders/${encodeURIComponent(product.id || product._id)}`, { method: "POST", body: { quantity } });
+      const productId = String(product.id || product._id);
+      setCartProducts((current) => current.filter((item) => String(item.id || item._id) !== productId));
+      const updatedProduct = result.product;
+      setProducts((current) => current.map((item) => String(item.id || item._id) === productId ? updatedProduct : item).filter((item) => Number(item.quantity ?? 1) > 0 && item.status !== "sold"));
+      setMyProducts((current) => current.map((item) => String(item.id || item._id) === productId ? updatedProduct : item));
+      setNotifications((current) => current);
       setOrders((current) => [result.order, ...current]);
       setSelectedProduct(null);
       notify("Purchase recorded. No payment was taken.");
@@ -346,7 +350,7 @@ export default function App() {
           onClose={() => setSelectedProduct(null)}
           onMessage={() => notify("Seller messaging is not implemented yet.")}
           onAddToCart={() => addToCart(selectedProduct)}
-          onBuy={() => handleBuy(selectedProduct)}
+          onBuy={(quantity) => handleBuy(selectedProduct, quantity)}
           isInCart={cartProducts.some((product) => String(product.id || product._id) === String(selectedProduct.id || selectedProduct._id))}
         />
       )}
