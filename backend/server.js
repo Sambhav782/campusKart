@@ -183,7 +183,10 @@ app.get("/api/my-products", authRequired, async (req, res, next) => {
 });
 
 app.get("/api/products", async (_req, res, next) => {
-  try { res.json(await getProducts()); } catch (error) { next(error); }
+  try {
+    const products = await getProducts();
+    res.json(products.filter((product) => product.status !== "sold" && Number(product.quantity ?? 1) > 0));
+  } catch (error) { next(error); }
 });
 app.get("/api/products/:id", async (req, res, next) => {
   try {
@@ -393,6 +396,8 @@ async function start() {
       await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
       getModels();
       storageMode = "mongo";
+      await mongoProduct.updateMany({ quantity: { $exists: false } }, { $set: { quantity: 1 } });
+      await mongoProduct.updateMany({ status: { $exists: false } }, { $set: { status: "available" } });
       // Seed the MongoDB collection with the demo listings only when it is empty.
       if (await mongoProduct.countDocuments() === 0) {
         const localData = await readJson();
