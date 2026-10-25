@@ -1,6 +1,6 @@
 import React from "react";
 // Top navigation and main actions.
-export default function Navbar({ onSell, onLogin, onNotify, onHome, onHowItWorks, darkMode, onToggleDarkMode }) {
+export default function Navbar({ onSell, onLogin, onNotify, onHome, onHowItWorks, darkMode, onToggleDarkMode, user }) {
   return (
     <header className="navbar">
       <div className="nav-inner">
@@ -21,9 +21,9 @@ export default function Navbar({ onSell, onLogin, onNotify, onHome, onHowItWorks
           </button>
           <button className="theme-btn" onClick={onToggleDarkMode} aria-label="Toggle dark mode">{darkMode ? "☀" : "☾"}</button>
           <button className="sell-btn" onClick={onSell}>＋ Sell an item</button>
-          <button className="profile-btn" onClick={onLogin}>
+          <button className="profile-btn" onClick={onLogin} title={user ? "Sign out" : "Sign in"}>
             <span className="avatar small">U</span>
-            <span className="profile-name">User</span>
+            <span className="profile-name">{user ? user.name : "Sign in"}</span>
             <span className="chevron">⌄</span>
           </button>
         </div>
