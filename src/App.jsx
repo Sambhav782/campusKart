@@ -70,7 +70,7 @@ export default function App() {
 
   const handleAuth = async (form) => {
     const endpoint = form.mode === "register" ? "/auth/register" : "/auth/login";
-    const result = await apiRequest(endpoint, { method: "POST", body: JSON.stringify(form) });
+    const result = await apiRequest(endpoint, { method: "POST", body: form });
     localStorage.setItem("campuskart_token", result.token);
     localStorage.setItem("campuskart_user", JSON.stringify(result.user));
     setUser(result.user);
