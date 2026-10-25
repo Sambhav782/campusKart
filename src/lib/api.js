@@ -15,7 +15,7 @@ export async function apiRequest(path, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {})
   };
-  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers, body: options.body ? (isFormData ? options.body : JSON.stringify(options.body)) : options.body });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.message || `Request failed (${response.status})`);
   return body;
