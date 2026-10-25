@@ -104,6 +104,7 @@ export default function App() {
         onHowItWorks={() => scrollTo("how-it-works")}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode((current) => !current)}
+        user={user}
       />
       <main>
         <Hero search={search} setSearch={setSearch} onSearch={() => scrollTo("marketplace")} />
