@@ -21,7 +21,7 @@ function CartItem({ product, onRemove, onOpen, onBuy }) {
 }
 
 /** Account sidebar and content shared by the /profile and /cart routes. */
-export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onBuyProduct, onLogout, onBrowse }) {
+export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onBuyProduct, onOpenNotifications, onLogout, onBrowse }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   const total = cartProducts.reduce((sum, product) => sum + Number(product.price || 0), 0);
   return (
@@ -37,7 +37,7 @@ export default function ProfilePage({ user, cartProducts, myProducts = [], order
           <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/cart"><span>🛒</span> My cart <b>{cartProducts.length}</b></NavLink>
           <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/your-listings"><span>📦</span> Your listings <b>{myProducts.length}</b></NavLink>
           <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/orders"><span>🧾</span> Orders <b>{orders.length}</b></NavLink>
-          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/notifications"><span>🔔</span> Notifications <b>{notifications.filter((item) => !item.read).length}</b></NavLink>
+          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/notifications" onClick={onOpenNotifications}><span>🔔</span> Notifications <b>{notifications.filter((item) => !item.read).length}</b></NavLink>
         </nav>
         <div className="account-sidebar-bottom">
           <button className="signout-btn" onClick={onLogout}><span>↪</span> Sign out</button>
