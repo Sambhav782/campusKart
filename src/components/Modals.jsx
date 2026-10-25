@@ -14,7 +14,7 @@ export function Modal({ title, onClose, children }) {
   );
 }
 
-export function ProductModal({ product, onClose, onMessage }) {
+export function ProductModal({ product, onClose, onMessage, onAddToCart, isInCart = false }) {
   const images = product.images?.length ? product.images : product.image ? [product.image] : [];
   const [activeImage, setActiveImage] = useState(0);
   useEffect(() => setActiveImage(0), [product.id]);
@@ -33,7 +33,7 @@ export function ProductModal({ product, onClose, onMessage }) {
           <div className="modal-price">₹{Number(product.price).toLocaleString("en-IN")} {Number(product.oldPrice) > 0 && <del>₹{Number(product.oldPrice).toLocaleString("en-IN")}</del>}</div>
           <p>{product.description || "Connect with the seller to ask questions and arrange a convenient campus handoff."}</p>
           <div className="seller-detail"><span className="avatar">{product.initials || "CK"}</span><div><b>{product.seller}</b><small>{product.location}</small></div></div>
-          <button className="primary-btn full" onClick={onMessage}>Message seller <span>→</span></button>
+          <div className="product-actions"><button className="primary-btn" onClick={onMessage}>Contact seller</button><button className="secondary-btn" onClick={onAddToCart} disabled={isInCart}>{isInCart ? "✓ Added to cart" : "＋ Add to cart"}</button></div>
         </div>
       </div>
     </div>
