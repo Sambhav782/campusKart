@@ -1,8 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+
+/* Global theme tokens and base styles. */
 :root {
-  font-family:"DM Sans",sans-serif;
-  color:#172033;
-  background:#f8fafc;
+  font-family: "DM Sans", sans-serif;
+  color: #172033;
+  background: #f8fafc;
   font-synthesis:none;
   text-rendering:optimizeLegibility;
   --ink:#172033;
@@ -102,7 +105,9 @@ button {
   font-weight:600
 }
 
-.nav-links button, .nav-links a:hover,.nav-links .active {
+.nav-links button:hover,
+.nav-links a:hover,
+.nav-links .active {
   color:var(--ink)
 }
 
@@ -1387,6 +1392,7 @@ input,textarea,.form-grid select {
 
 }
 
+
 /* Dark mode overrides. */
 .dark-mode {
   --ink:#edf2ff;
@@ -1406,11 +1412,13 @@ input,textarea,.form-grid select {
   color:#111827
 }
 
-.dark-mode .nav-links button, .nav-links a {
+.dark-mode .nav-links button,
+.dark-mode .nav-links a {
   color:#9ca8bc
 }
 
-.dark-mode .nav-links button, .nav-links a:hover,.dark-mode .nav-links .active {
+.dark-mode .nav-links button,
+.dark-mode .nav-links a:hover,.dark-mode .nav-links .active {
   color:#fff
 }
 
@@ -1467,6 +1475,7 @@ input,textarea,.form-grid select {
   display:grid;
   place-items:center
 }
+
 
 /* Item photo upload */
 .photo-upload-field {
@@ -1629,6 +1638,7 @@ input,textarea,.form-grid select {
 
 }
 
+
 /* Profile, account sidebar and cart */
 .profile-btn {
   position: relative;
@@ -1781,13 +1791,15 @@ input,textarea,.form-grid select {
   font-weight: 700;
 }
 
-.account-side-nav button, .account-side-nav a > span {
+.account-side-nav button > span,
+.account-side-nav a > span {
   width: 20px;
   text-align: center;
   font-size: 15px;
 }
 
-.account-side-nav button, .account-side-nav a b {
+.account-side-nav button b,
+.account-side-nav a b {
   margin-left: auto;
   background: #edf2ff;
   color: var(--blue);
@@ -1798,7 +1810,10 @@ input,textarea,.form-grid select {
   font-size: 10px;
 }
 
-.account-side-nav button, .account-side-nav a:hover, .account-side-nav button, .account-side-nav a.selected {
+.account-side-nav button:hover,
+.account-side-nav button.selected,
+.account-side-nav a:hover,
+.account-side-nav a.selected {
   background: #eef3ff;
   color: var(--blue);
 }
@@ -2079,11 +2094,14 @@ input,textarea,.form-grid select {
   border-color: #2b3447;
 }
 
-.dark-mode .account-side-nav button, .account-side-nav a {
+.dark-mode .account-side-nav button,
+.dark-mode .account-side-nav a {
   color: #aeb8ca;
 }
 
-.dark-mode .account-side-nav button, .account-side-nav a:hover, .dark-mode .account-side-nav button, .account-side-nav a.selected {
+.dark-mode .account-side-nav button,
+.dark-mode .account-side-nav a:hover, .dark-mode .account-side-nav button,
+.dark-mode .account-side-nav a.selected {
   background: #202e49;
   color: #91adff;
 }
@@ -2188,6 +2206,7 @@ input,textarea,.form-grid select {
 
 }
 
+
 /* Keep sell form scrollable on short screens */
 .modal-backdrop {
   overflow-y: auto;
@@ -2209,6 +2228,7 @@ input,textarea,.form-grid select {
 .form-modal textarea {
   min-height: 100px;
 }
+
 
 /* Marketplace search in the navbar */
 .nav-search {
@@ -2336,6 +2356,7 @@ input,textarea,.form-grid select {
   }
 
 }
+
 
 /* Explore page and homepage popular listings */
 .nav-links .active {
@@ -2480,7 +2501,12 @@ input,textarea,.form-grid select {
 
 }
 
-/* Router links use the same appearance as the original navigation buttons. */
+
+
+
+/* ==========================================
+   React Router links: main and account navs
+   ========================================== */
 .nav-links a,
 .account-side-nav a {
   text-decoration: none;
