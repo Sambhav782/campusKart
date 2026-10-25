@@ -6,6 +6,7 @@ import Categories from "./components/Categories";
 import Marketplace from "./components/Marketplace";
 import TrustSection from "./components/TrustSection";
 import Footer from "./components/Footer";
+import ProfilePage from "./components/ProfilePage";
 import { ProductModal, SellModal, LoginModal } from "./components/Modals";
 import { apiRequest } from "./lib/api";
 import "./index.css";
@@ -17,8 +18,13 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showSell, setShowSell] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [currentPage, setCurrentPage] = useState("home");
   const [favorites, setFavorites] = useState(() => {
     try { return JSON.parse(localStorage.getItem("campuskart_favorites") || "[]"); }
+    catch { return []; }
+  });
+  const [cartIds, setCartIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("campuskart_cart") || "[]").map(String); }
     catch { return []; }
   });
   const [toast, setToast] = useState("");
@@ -35,7 +41,7 @@ export default function App() {
     window.__campusKartToast = setTimeout(() => setToast(""), 2800);
   };
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  const selectCategory = (category) => { setActiveCategory(category); scrollTo("marketplace"); };
+  const selectCategory = (category) => { setActiveCategory(category); setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); };
   const toggleFavorite = (id) => {
     setFavorites((current) => {
       const next = current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id];
@@ -43,7 +49,34 @@ export default function App() {
       return next;
     });
   };
+  const addToCart = (product) => {
+    if (!user) {
+      setShowLogin(true);
+      notify("Sign in to add items to your cart.");
+      return;
+    }
+    const id = String(product.id || product._id);
+    if (cartIds.includes(id)) {
+      notify("This item is already in your cart.");
+      return;
+    }
+    setCartIds((current) => {
+      const next = [...current, id];
+      localStorage.setItem("campuskart_cart", JSON.stringify(next));
+      return next;
+    });
+    notify("Added to your cart.");
+  };
+  const removeFromCart = (productId) => {
+    setCartIds((current) => {
+      const next = current.filter((id) => id !== String(productId));
+      localStorage.setItem("campuskart_cart", JSON.stringify(next));
+      return next;
+    });
+    notify("Item removed from your cart.");
+  };
   const resetHome = () => {
+    setCurrentPage("home");
     setActiveCategory("All");
     setSearch("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -91,42 +124,62 @@ export default function App() {
     localStorage.removeItem("campuskart_token");
     localStorage.removeItem("campuskart_user");
     setUser(null);
+    setCurrentPage("home");
     notify("You have signed out.");
   };
+
+  const cartProducts = products.filter((product) => cartIds.includes(String(product.id || product._id)));
 
   return (
     <div className={darkMode ? "app-shell dark-mode" : "app-shell"}>
       <Navbar
         onSell={() => { if (!user) { setShowLogin(true); notify("Sign in to publish a listing."); } else setShowSell(true); }}
-        onLogin={() => user ? handleLogout() : setShowLogin(true)}
-        onNotify={() => notify(user ? "You're all caught up." : "Sign in to access your account.")}
+        onLogin={() => setShowLogin(true)}
+        onProfile={() => user ? setCurrentPage("profile") : setShowLogin(true)}
+        onNotify={(message) => notify(message || "You're all caught up.")}
         onHome={resetHome}
-        onHowItWorks={() => scrollTo("how-it-works")}
+        onHowItWorks={() => { setCurrentPage("home"); setTimeout(() => scrollTo("how-it-works"), 0); }}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode((current) => !current)}
         user={user}
+        cartCount={cartIds.length}
       />
       <main>
-        <Hero search={search} setSearch={setSearch} onSearch={() => scrollTo("marketplace")} />
-        <Categories activeCategory={activeCategory} onCategory={selectCategory} onViewAll={() => { setActiveCategory("All"); setSearch(""); }} />
-        <Marketplace
-          products={products}
-          activeCategory={activeCategory}
-          search={search}
-          favorites={favorites}
-          onFavorite={toggleFavorite}
-          onOpen={setSelectedProduct}
-          onFilter={() => notify("Use search and categories to narrow listings.")}
-          onSort={(event) => {
-            const mode = event.target.value;
-            setProducts((current) => [...current].sort((a, b) => mode === "Price: low to high" ? a.price - b.price : mode === "Newest first" ? new Date(b.createdAt || 0) - new Date(a.createdAt || 0) : 0));
-          }}
-          onClear={() => { setSearch(""); setActiveCategory("All"); }}
-        />
-        <TrustSection onSell={() => { if (user) setShowSell(true); else setShowLogin(true); }} />
+        {currentPage === "profile" || currentPage === "cart" ? (
+          <ProfilePage
+            user={user}
+            cartProducts={cartProducts}
+            activeSection={currentPage}
+            onNavigate={setCurrentPage}
+            onRemoveFromCart={removeFromCart}
+            onOpenProduct={(product) => { setSelectedProduct(product); }}
+            onLogout={handleLogout}
+            onBrowse={() => { setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); }}
+          />
+        ) : (
+          <>
+            <Hero search={search} setSearch={setSearch} onSearch={() => scrollTo("marketplace")} />
+            <Categories activeCategory={activeCategory} onCategory={selectCategory} onViewAll={() => { setActiveCategory("All"); setSearch(""); }} />
+            <Marketplace
+              products={products}
+              activeCategory={activeCategory}
+              search={search}
+              favorites={favorites}
+              onFavorite={toggleFavorite}
+              onOpen={setSelectedProduct}
+              onFilter={() => notify("Use search and categories to narrow listings.")}
+              onSort={(event) => {
+                const mode = event.target.value;
+                setProducts((current) => [...current].sort((a, b) => mode === "Price: low to high" ? a.price - b.price : mode === "Newest first" ? new Date(b.createdAt || 0) - new Date(a.createdAt || 0) : 0));
+              }}
+              onClear={() => { setSearch(""); setActiveCategory("All"); }}
+            />
+            <TrustSection onSell={() => { if (user) setShowSell(true); else setShowLogin(true); }} />
+          </>
+        )}
       </main>
       <Footer onFeedback={() => notify("Thanks for the feedback!")} />
-      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onMessage={() => notify("Seller messaging is not implemented yet.")} />}
+      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onMessage={() => notify("Seller messaging is not implemented yet.")} onAddToCart={() => addToCart(selectedProduct)} isInCart={cartIds.includes(String(selectedProduct.id || selectedProduct._id))} />}
       {showSell && <SellModal onClose={() => setShowSell(false)} onPublish={handlePublish} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleAuth} />}
       {toast && <div className="toast"><span>✓</span>{toast}</div>}
