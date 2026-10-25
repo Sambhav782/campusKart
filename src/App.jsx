@@ -393,7 +393,8 @@ export default function App() {
                 activeCategory={activeCategory}
                 onCategoryChange={setActiveCategory}
                 search={search}
-                onAddToCart={addToCart}
+                cartProducts={cartProducts}
+                onToggleCart={toggleCart}
                 onOpen={openProduct}
                 onClear={() => {
                   setSearch("");
