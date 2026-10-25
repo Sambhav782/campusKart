@@ -363,8 +363,7 @@ export default function App() {
                   products={products}
                   activeCategory="All"
                   search=""
-                  favorites={favorites}
-                  onFavorite={toggleFavorite}
+                  onAddToCart={addToCart}
                   onOpen={openProduct}
                   limit={4}
                   showFilters={false}
@@ -383,8 +382,7 @@ export default function App() {
                 activeCategory={activeCategory}
                 onCategoryChange={setActiveCategory}
                 search={search}
-                favorites={favorites}
-                onFavorite={toggleFavorite}
+                onAddToCart={addToCart}
                 onOpen={openProduct}
                 onClear={() => {
                   setSearch("");
