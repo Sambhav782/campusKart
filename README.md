@@ -1,113 +1,128 @@
 # CampusKart
 
-CampusKart is a **frontend prototype for a campus-first marketplace** where students can discover, buy, and sell useful items within their college community.
-
-The current version is built with React and Vite. It uses sample product data and is intended to demonstrate the user interface and frontend interactions; it does not yet include a production backend.
+CampusKart is a campus-first marketplace prototype where students can discover, buy, and sell useful items within their college community. It includes a React/Vite frontend and an Express API, with JSON-file storage by default and optional MongoDB support.
 
 ## Features
 
-- **Marketplace browsing** — view product cards and sample listings.
-- **Search and category filtering** — find listings by keyword or category.
-- **Product details** — open a modal to view more information about a listing.
-- **Favorites** — mark products as favorites in the prototype.
-- **Sell-item flow** — explore the demo listing form.
-- **Demo sign-in** — open the sign-in interface.
-- **Responsive layout** — browse the interface on different screen sizes.
-- **Campus trust and guidance** — learn how the marketplace is intended to work.
+### Marketplace
+- Browse, search, and filter product listings.
+- View product details and images.
+- Create listings while signed in, with up to five item photos (5 MB each).
+- Track listing quantity and availability; sold-out listings remain marked as sold.
+- Save favorites in the current browser.
 
-> **Prototype note:** Listings use mock data and remote demo images. Sign-in, selling, and other interactions are frontend demonstrations only. User accounts, persistent listings, messaging, payments, and backend/API integration are not implemented.
+### Accounts and shopping
+- Register and sign in using an email and password.
+- Passwords are hashed; authenticated API requests use JWT bearer tokens.
+- Add listings to your cart, purchase an item, or buy eligible cart items in bulk.
+- View your profile, listings, cart, orders, and notifications.
+- Delete your account from the profile page. Account deletion also removes listings published by that account and clears references to removed listings from other users' carts.
+
+### Storage
+- Use the local JSON database at `backend/data/db.json` by default.
+- Use MongoDB when a valid `MONGODB_URI` is configured and the database is reachable.
+- Fall back to JSON storage if MongoDB is not configured or cannot connect.
+
+> **Prototype limitations:** This is a learning/demo project, not production-ready marketplace infrastructure. It does not provide real payment processing, seller messaging, email verification, password reset, or a full moderation system. Listing images are stored on the backend filesystem. Favorites currently persist in the browser only. Use HTTPS and a strong `JWT_SECRET` before deploying.
 
 ## Tech stack
 
-- [React](https://react.dev/) 18
-- [Vite](https://vite.dev/)
-- JavaScript (ES modules)
-- CSS
+- **Frontend:** React 18, Vite, JavaScript, CSS
+- **Backend:** Node.js, Express
+- **Authentication:** bcrypt password hashing and signed JWTs
+- **Database:** JSON file by default; optional MongoDB with Mongoose
 
-## Getting started
+## Prerequisites
 
-### Prerequisites
+Install a current Node.js LTS release (npm is included).
 
-Install [Node.js](https://nodejs.org/) (which includes npm). A current Node.js LTS release is recommended.
+## Run locally
 
-### 1. Clone the repository
+Open two terminals in the repository root.
 
-```bash
-git clone https://github.com/Sambhav782/campusKart.git
-cd campusKart
-```
-
-### 2. Install dependencies
+### 1. Start the backend
 
 ```bash
+cd backend
 npm install
 ```
 
-### 3. Start the development server
+Copy `.env.example` to `.env` and set a unique `JWT_SECRET`. Leave `MONGODB_URI` empty to use JSON storage.
+
+Start the API:
 
 ```bash
 npm run dev
 ```
 
-Open the local URL printed in your terminal (Vite commonly uses `http://localhost:5173`).
+The API runs at `http://localhost:5000`. Visit `http://localhost:5000/api/health` to check the active storage mode.
 
-### Build for production
+### 2. Start the frontend
 
-```bash
-npm run build
-```
-
-The production-ready files are generated in the `dist/` directory.
-
-To preview that build locally:
+In a second terminal, from the repository root:
 
 ```bash
-npm run preview
+npm install
+npm run dev
 ```
+
+Open the local URL printed by Vite (usually `http://localhost:5173`).
+
+The frontend defaults to `http://localhost:5000/api`. To use a different API URL, create a root `.env` based on `.env.example` and set `VITE_API_URL`.
+
+## Optional MongoDB setup
+
+1. Create a MongoDB database (local or Atlas) and obtain its connection string.
+2. Put the connection string in `backend/.env` as `MONGODB_URI=...`.
+3. Restart the backend.
+4. Visit `/api/health`; the response should report `"storage":"mongo"` when connected.
+
+If MongoDB is missing or unreachable at startup, the API logs a warning and uses `backend/data/db.json` instead. **The JSON file and MongoDB are separate stores; data is not automatically migrated or synchronized between them.** Accounts and listings created in one store will not automatically appear in the other.
+
+## API overview
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/health` | API status and active storage mode |
+| GET | `/api/products` | List products |
+| GET | `/api/products/:id` | Get one product |
+| POST | `/api/products` | Create a listing (authentication required) |
+| POST | `/api/auth/register` | Create an account |
+| POST | `/api/auth/login` | Sign in |
+| GET | `/api/auth/me` | Get the current signed-in user |
+| DELETE | `/api/account` | Delete the signed-in account and its listings |
+| `/api/cart` and `/api/orders` | See `backend/server.js` for supported cart and order operations |
+
+Authenticated endpoints require a valid JWT bearer token. The account-deletion action is permanent and removes the user's listings as well.
 
 ## Project structure
 
 ```text
 campusKart/
-├── index.html
+├── backend/
+│   ├── data/db.json
+│   ├── .env.example
+│   ├── package.json
+│   └── server.js
+├── src/
+│   ├── components/
+│   ├── data/products.js
+│   ├── lib/api.js
+│   ├── App.jsx
+│   └── index.css
 ├── package.json
-├── package-lock.json
-└── src/
-    ├── App.jsx
-    ├── main.jsx
-    ├── index.css
-    ├── components/
-    │   ├── Categories.jsx
-    │   ├── Footer.jsx
-    │   ├── Hero.jsx
-    │   ├── Marketplace.jsx
-    │   ├── Modals.jsx
-    │   ├── Navbar.jsx
-    │   ├── ProductCard.jsx
-    │   └── TrustSection.jsx
-    └── data/
-        └── products.js
+└── README.md
 ```
 
-## Dependency management
+## Security and data notes
 
-This is a **Node.js frontend project**, so dependencies are declared in `package.json` and pinned by `package-lock.json`. Use `npm install` to install them. A Python `requirements.txt` file is not applicable to this project unless Python components are added later.
-
-## Current status and next steps
-
-CampusKart is currently a frontend prototype. Possible next steps include:
-
-- Connect the UI to a backend and database.
-- Implement real authentication and user profiles.
-- Persist product listings and favorites.
-- Add listing image uploads and product management.
-- Add seller-buyer contact or messaging.
-- Validate and test the production build and deployment.
-
-## Contributing
-
-For local development, create a branch for your changes and open a pull request with a clear description of what changed.
+- Never commit real `.env` files, credentials, or secrets.
+- Use a long, random `JWT_SECRET` outside local development.
+- The JSON store is suitable for local development and demos only; it is not designed for concurrent production writes or multi-instance hosting.
+- The JSON database file must be on persistent storage. Some hosting platforms use ephemeral filesystems.
+- Configure `CLIENT_ORIGIN` to your deployed frontend origin when hosting the API separately.
+- Back up your data before testing destructive actions such as account deletion.
 
 ## License
 
-No license has been specified yet. Unless a license is added to this repository, standard copyright restrictions apply.
+No license has been specified yet.
