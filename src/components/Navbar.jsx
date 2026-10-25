@@ -16,7 +16,6 @@ export default function Navbar({
   darkMode,
   onToggleDarkMode,
   user,
-  cartCount = 0,
   notificationCount = 0,
   onNotifications,
   search,
@@ -89,11 +88,6 @@ export default function Navbar({
             aria-label={user ? "Open profile and cart" : "Sign in"}
           >
             <span className="avatar profile-avatar">{initial}</span>
-            {cartCount > 0 && (
-              <span className="cart-count" aria-label={`${cartCount} items in cart`}>
-                {cartCount}
-              </span>
-            )}
           </button>
         </div>
       </div>
