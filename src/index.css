@@ -2895,3 +2895,57 @@ input,textarea,.form-grid select {
 .chat-seller-btn span { color: var(--blue); font-size: 16px; }
 .dark-mode .chat-seller-btn { color: #edf2ff; border-color: #364156; }
 .dark-mode .chat-seller-btn:hover { background: #202e49; }
+
+/* Keep the cart's primary and secondary actions visually separate. */
+.cart-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.cart-footer-actions .primary-btn,
+.cart-footer-actions .secondary-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-footer-actions .secondary-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cart-footer-actions .secondary-btn:hover {
+  background: #f7f9ff;
+  border-color: #b8c9ff;
+}
+
+.dark-mode .cart-footer-actions .secondary-btn {
+  background: #182132;
+  color: #edf2ff;
+  border-color: #364156;
+}
+
+.dark-mode .cart-footer-actions .secondary-btn:hover {
+  background: #202e49;
+}
+
+@media (max-width: 420px) {
+  .cart-footer-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cart-footer-actions button {
+    width: 100%;
+  }
+}
+
