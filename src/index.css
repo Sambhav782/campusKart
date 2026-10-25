@@ -159,3 +159,33 @@
   .nav-search > span { font-size: 18px; }
   .nav-search input { font-size: 10px; }
 }
+
+/* Explore page and homepage popular listings */
+.nav-links .active { color: var(--ink); }
+.explore-page { min-height: 58vh; padding-bottom: 28px; }
+.explore-intro { max-width: 1184px; margin: 0 auto; padding: 48px 28px 8px; }
+.explore-intro h1 { margin: 8px 0; font: 700 clamp(36px, 5vw, 54px)/1.05 "Space Grotesk", sans-serif; letter-spacing: -.05em; }
+.explore-intro p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.explore-section { padding-top: 30px; }
+.explore-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 16px; margin: -5px 0 26px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+.explore-toolbar label, .explore-sort { display: grid; gap: 7px; min-width: 150px; color: #667085; font-size: 11px; font-weight: 800; }
+.explore-toolbar select, .explore-toolbar input, .explore-sort select { width: 100%; min-width: 0; margin: 0; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fbfcfe; color: var(--ink); font-size: 12px; }
+.explore-toolbar label:nth-child(3) { width: 150px; }
+.explore-sort { min-width: 170px; }
+.explore-sort select { margin-top: 7px; }
+.explore-reset { padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; color: var(--blue); font-size: 12px; font-weight: 800; }
+.explore-reset:hover { background: #f1f5ff; }
+.dark-mode .explore-intro p { color: #9eabbf; }
+.dark-mode .explore-toolbar { background: #182132; border-color: #2b3447; }
+.dark-mode .explore-toolbar select, .dark-mode .explore-toolbar input, .dark-mode .explore-sort select { background: #111827; border-color: #364156; color: #edf2ff; }
+.dark-mode .explore-reset { border-color: #364156; }
+@media (max-width: 760px) {
+  .explore-intro { padding: 32px 20px 8px; }
+  .explore-section { padding-top: 24px; }
+  .explore-toolbar { display: grid; grid-template-columns: 1fr 1fr; padding: 13px; }
+  .explore-toolbar label, .explore-toolbar label:nth-child(3) { width: auto; min-width: 0; }
+  .explore-reset { align-self: end; }
+}
+@media (max-width: 420px) {
+  .explore-toolbar { grid-template-columns: 1fr; }
+}
