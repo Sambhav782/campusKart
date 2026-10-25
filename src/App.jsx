@@ -81,7 +81,7 @@ export default function App() {
   const handlePublish = async (form) => {
     if (!user) throw new Error("Please sign in before publishing a listing.");
     if (!apiOnline) throw new Error("The backend is offline. Start the backend and try again.");
-    const saved = await apiRequest("/products", { method: "POST", body: JSON.stringify(form) });
+    const saved = await apiRequest("/products", { method: "POST", body: form });
     setProducts((current) => [saved, ...current]);
     setShowSell(false);
     notify("Your listing has been published.");
