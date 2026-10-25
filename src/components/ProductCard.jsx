@@ -11,6 +11,7 @@ export default function ProductCard({ product, favorite, onFavorite, onOpen }) {
       <button className="product-image" onClick={() => onOpen(product)}>
         <img src={assetUrl(image) || "https://placehold.co/600x400?text=CampusKart"} alt={product.title} />
         <span className="condition">{product.condition}</span>
+        {product.status === "sold" || Number(product.quantity ?? 1) <= 0 ? <span className="stock-badge sold-badge">Sold out</span> : <span className="stock-badge">{Number(product.quantity ?? 1)} available</span>}
       </button>
       <div className="product-info">
         <div className="product-category">{product.category}</div>
