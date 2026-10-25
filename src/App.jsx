@@ -265,6 +265,7 @@ export default function App() {
         onNavigate={(page) => navigate(`/${page}`)}
         onRemoveFromCart={removeFromCart}
         onOpenProduct={openProduct}
+        onBuyProduct={handleBuy}
         onLogout={handleLogout}
         onBrowse={() => goToExplore()}
       />
@@ -279,6 +280,7 @@ export default function App() {
         onLogin={() => setShowLogin(true)}
         onProfile={() => user ? navigate("/profile") : setShowLogin(true)}
         onNotify={(message) => notify(message || "You're all caught up.")}
+        onNotifications={() => user ? navigate("/notifications") : setShowLogin(true)}
         onHome={resetHome}
         onExplore={() => goToExplore(activeCategory, search)}
         onHowItWorks={showHowItWorks}
@@ -286,6 +288,7 @@ export default function App() {
         onToggleDarkMode={() => setDarkMode((current) => !current)}
         user={user}
         cartCount={cartProducts.length}
+        notificationCount={notifications.filter((item) => !item.read).length}
         search={search}
         setSearch={setSearch}
         onSearch={submitSearch}
