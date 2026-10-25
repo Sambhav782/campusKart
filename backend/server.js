@@ -275,6 +275,72 @@ app.delete("/api/cart/:productId", authRequired, async (req, res, next) => {
 
 
 // A simulated purchase: no payment is collected by CampusKart.
+app.post("/api/orders/bulk", authRequired, async (req, res, next) => {
+  try {
+    let cartIds;
+    let products;
+    if (storageMode === "mongo") {
+      const buyer = await mongoUser.findById(req.user.id).select("cart").lean();
+      cartIds = (buyer?.cart || []).map(String);
+      const found = await mongoProduct.find({ _id: { $in: cartIds } }).lean();
+      const byId = new Map(found.map((product) => [String(product._id), cleanProduct(product)]));
+      products = cartIds.map((id) => byId.get(id)).filter(Boolean);
+    } else {
+      const db = await readJson();
+      const buyer = db.users.find((entry) => String(entry.id) === String(req.user.id));
+      cartIds = (buyer?.cart || []).map(String);
+      const byId = new Map(db.products.map((product) => [String(product.id || product._id), product]));
+      products = cartIds.map((id) => byId.get(id)).filter(Boolean);
+    }
+    if (!products.length) return res.status(400).json({ message: "Your cart is empty." });
+    for (const product of products) {
+      if (String(product.ownerId) === String(req.user.id)) return res.status(400).json({ message: `You cannot buy your own listing: ${product.title}.` });
+      if (product.status === "sold" || Number(product.quantity ?? 1) < 1) return res.status(409).json({ message: `${product.title} is sold out. Remove it from your cart and try again.` });
+    }
+    const now = new Date().toISOString();
+    const orders = [];
+    const sellerNotifications = [];
+    for (const item of products) {
+      let purchased;
+      if (storageMode === "mongo") {
+        const updated = await mongoProduct.findOneAndUpdate({ _id: item.id, status: { $ne: "sold" }, quantity: { $gte: 1 } }, { $inc: { quantity: -1 } }, { new: true });
+        if (!updated) return res.status(409).json({ message: `Stock changed for ${item.title}. Refresh your cart and try again.` });
+        if (updated.quantity <= 0) {
+          await mongoProduct.updateOne({ _id: updated._id, quantity: { $lte: 0 } }, { $set: { status: "sold" } });
+          updated.status = "sold";
+        } else updated.status = "available";
+        purchased = cleanProduct(updated);
+      } else {
+        const db = await readJson();
+        const current = db.products.find((product) => String(product.id || product._id) === String(item.id));
+        if (!current || current.status === "sold" || Number(current.quantity ?? 1) < 1) return res.status(409).json({ message: `Stock changed for ${item.title}. Refresh your cart and try again.` });
+        current.quantity = Number(current.quantity ?? 1) - 1;
+        current.status = current.quantity <= 0 ? "sold" : "available";
+        purchased = current;
+        await writeJson(db);
+      }
+      const order = { id: randomUUID(), productId: String(purchased.id || purchased._id), quantity: 1, buyerId: String(req.user.id), buyerName: String(req.user.name || "A CampusKart user"), sellerId: String(purchased.ownerId), status: "Purchased", createdAt: now };
+      orders.push({ ...order, product: { id: order.productId, title: purchased.title, price: purchased.price, image: purchased.image || "", category: purchased.category || "", status: purchased.status } });
+      if (purchased.ownerId) sellerNotifications.push({ sellerId: String(purchased.ownerId), notification: { id: randomUUID(), message: `${order.buyerName} purchased 1 × ${purchased.title}.`, productId: order.productId, orderId: order.id, read: false, createdAt: now } });
+    }
+    if (storageMode === "mongo") {
+      await mongoUser.updateOne({ _id: req.user.id }, { $set: { cart: [] }, $push: { orders: { $each: orders.map(({ product, ...order }) => order) } } });
+      for (const entry of sellerNotifications) await mongoUser.updateOne({ _id: entry.sellerId }, { $push: { notifications: entry.notification } });
+    } else {
+      const db = await readJson();
+      const buyer = db.users.find((entry) => String(entry.id) === String(req.user.id));
+      if (buyer) { buyer.cart = []; buyer.orders = [...(buyer.orders || []), ...orders.map(({ product, ...order }) => order)]; }
+      for (const entry of sellerNotifications) {
+        const seller = db.users.find((entryUser) => String(entryUser.id) === entry.sellerId);
+        if (seller) seller.notifications = [...(seller.notifications || []), entry.notification];
+      }
+      await writeJson(db);
+    }
+    res.status(201).json({ orders, purchasedProducts: products.length });
+  } catch (error) { next(error); }
+});
+
+
 app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
   try {
     const productId = String(req.params.productId);
@@ -357,71 +423,6 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
 });
 
 // Purchase every item in the signed-in user's cart as separate orders.
-app.post("/api/orders/bulk", authRequired, async (req, res, next) => {
-  try {
-    let cartIds;
-    let products;
-    if (storageMode === "mongo") {
-      const buyer = await mongoUser.findById(req.user.id).select("cart").lean();
-      cartIds = (buyer?.cart || []).map(String);
-      const found = await mongoProduct.find({ _id: { $in: cartIds } }).lean();
-      const byId = new Map(found.map((product) => [String(product._id), cleanProduct(product)]));
-      products = cartIds.map((id) => byId.get(id)).filter(Boolean);
-    } else {
-      const db = await readJson();
-      const buyer = db.users.find((entry) => String(entry.id) === String(req.user.id));
-      cartIds = (buyer?.cart || []).map(String);
-      const byId = new Map(db.products.map((product) => [String(product.id || product._id), product]));
-      products = cartIds.map((id) => byId.get(id)).filter(Boolean);
-    }
-    if (!products.length) return res.status(400).json({ message: "Your cart is empty." });
-    for (const product of products) {
-      if (String(product.ownerId) === String(req.user.id)) return res.status(400).json({ message: `You cannot buy your own listing: ${product.title}.` });
-      if (product.status === "sold" || Number(product.quantity ?? 1) < 1) return res.status(409).json({ message: `${product.title} is sold out. Remove it from your cart and try again.` });
-    }
-    const now = new Date().toISOString();
-    const orders = [];
-    const sellerNotifications = [];
-    for (const item of products) {
-      let purchased;
-      if (storageMode === "mongo") {
-        const updated = await mongoProduct.findOneAndUpdate({ _id: item.id, status: { $ne: "sold" }, quantity: { $gte: 1 } }, { $inc: { quantity: -1 } }, { new: true });
-        if (!updated) return res.status(409).json({ message: `Stock changed for ${item.title}. Refresh your cart and try again.` });
-        if (updated.quantity <= 0) {
-          await mongoProduct.updateOne({ _id: updated._id, quantity: { $lte: 0 } }, { $set: { status: "sold" } });
-          updated.status = "sold";
-        } else updated.status = "available";
-        purchased = cleanProduct(updated);
-      } else {
-        const db = await readJson();
-        const current = db.products.find((product) => String(product.id || product._id) === String(item.id));
-        if (!current || current.status === "sold" || Number(current.quantity ?? 1) < 1) return res.status(409).json({ message: `Stock changed for ${item.title}. Refresh your cart and try again.` });
-        current.quantity = Number(current.quantity ?? 1) - 1;
-        current.status = current.quantity <= 0 ? "sold" : "available";
-        purchased = current;
-        await writeJson(db);
-      }
-      const order = { id: randomUUID(), productId: String(purchased.id || purchased._id), quantity: 1, buyerId: String(req.user.id), buyerName: String(req.user.name || "A CampusKart user"), sellerId: String(purchased.ownerId), status: "Purchased", createdAt: now };
-      orders.push({ ...order, product: { id: order.productId, title: purchased.title, price: purchased.price, image: purchased.image || "", category: purchased.category || "", status: purchased.status } });
-      if (purchased.ownerId) sellerNotifications.push({ sellerId: String(purchased.ownerId), notification: { id: randomUUID(), message: `${order.buyerName} purchased 1 × ${purchased.title}.`, productId: order.productId, orderId: order.id, read: false, createdAt: now } });
-    }
-    if (storageMode === "mongo") {
-      await mongoUser.updateOne({ _id: req.user.id }, { $set: { cart: [] }, $push: { orders: { $each: orders.map(({ product, ...order }) => order) } } });
-      for (const entry of sellerNotifications) await mongoUser.updateOne({ _id: entry.sellerId }, { $push: { notifications: entry.notification } });
-    } else {
-      const db = await readJson();
-      const buyer = db.users.find((entry) => String(entry.id) === String(req.user.id));
-      if (buyer) { buyer.cart = []; buyer.orders = [...(buyer.orders || []), ...orders.map(({ product, ...order }) => order)]; }
-      for (const entry of sellerNotifications) {
-        const seller = db.users.find((entryUser) => String(entryUser.id) === entry.sellerId);
-        if (seller) seller.notifications = [...(seller.notifications || []), entry.notification];
-      }
-      await writeJson(db);
-    }
-    res.status(201).json({ orders, purchasedProducts: products.length });
-  } catch (error) { next(error); }
-});
-
 app.get("/api/orders", authRequired, async (req, res, next) => {
   try {
     let orders;
