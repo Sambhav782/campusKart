@@ -182,6 +182,11 @@ async function start() {
       await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
       getModels();
       storageMode = "mongo";
+      // Seed the MongoDB collection with the demo listings only when it is empty.
+      if (await mongoProduct.countDocuments() === 0) {
+        const localData = await readJson();
+        if (localData.products.length) await mongoProduct.insertMany(localData.products.map(({ id, ...product }) => product));
+      }
       console.log("Connected to MongoDB; using MongoDB storage.");
     } catch (error) {
       storageMode = "json";
