@@ -248,7 +248,7 @@ export default function App() {
       setProducts((current) => current.map((item) => String(item.id || item._id) === productId ? updatedProduct : item).filter((item) => Number(item.quantity ?? 1) > 0 && item.status !== "sold"));
       setMyProducts((current) => current.map((item) => String(item.id || item._id) === productId ? updatedProduct : item));
       setNotifications((current) => current);
-      setOrders((current) => [result.order, ...current]);
+      setOrders((current) => [{ ...result.order, product: result.product }, ...current]);
       if (Number(updatedProduct.quantity ?? 1) <= 0 || updatedProduct.status === "sold") navigate("/orders");
       notify("Purchase recorded. No payment was taken.");
     } catch (error) { notify(error.message || "Could not complete purchase."); }
