@@ -21,7 +21,7 @@ function CartItem({ product, onRemove, onOpen, onBuy }) {
 }
 
 /** Account sidebar and content shared by the /profile and /cart routes. */
-export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onBuyProduct, onBuyAll, onOpenNotifications, onLogout, onBrowse }) {
+export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onBuyProduct, onBuyAll, onOpenNotifications, onLogout, onDeleteAccount, onBrowse }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   const total = cartProducts.reduce((sum, product) => sum + Number(product.price || 0), 0);
   return (
@@ -41,6 +41,7 @@ export default function ProfilePage({ user, cartProducts, myProducts = [], order
         </nav>
         <div className="account-sidebar-bottom">
           <button className="signout-btn" onClick={onLogout}><span>↪</span> Sign out</button>
+          <button className="delete-account-btn" onClick={onDeleteAccount}><span>×</span> Delete account</button>
         </div>
       </aside>
 
