@@ -246,6 +246,29 @@ app.post("/api/auth/login", async (req, res, next) => {
 });
 app.get("/api/auth/me", authRequired, (req, res) => res.json({ user: req.user }));
 
+// Permanently delete the signed-in account and all listings owned by it.
+app.delete("/api/account", authRequired, async (req, res, next) => {
+  try {
+    if (storageMode === "mongo") {
+      await mongoProduct.deleteMany({ ownerId: String(req.user.id) });
+      await mongoUser.deleteOne({ _id: req.user.id });
+    } else {
+      const db = await readJson();
+      db.products = db.products.filter((product) => String(product.ownerId) !== String(req.user.id));
+      db.users = db.users.filter((user) => String(user.id) !== String(req.user.id));
+      // Remove deleted listings from every remaining user's cart.
+      const remainingProductIds = new Set(db.products.map((product) => String(product.id || product._id)));
+      db.users = db.users.map((user) => ({
+        ...user,
+        cart: (user.cart || []).filter((id) => remainingProductIds.has(String(id)))
+      }));
+      await writeJson(db);
+    }
+    res.json({ message: "Account and its listings deleted." });
+  } catch (error) { next(error); }
+});
+
+
 // The cart is owned by the authenticated account, not by browser localStorage.
 app.get("/api/cart", authRequired, async (req, res, next) => {
   try { res.json(await getUserCart(req.user.id)); }
