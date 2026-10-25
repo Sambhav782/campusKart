@@ -60,6 +60,7 @@ const ProductSchema = new mongoose.Schema({
   images: { type: [String], default: [] },
   description: { type: String, default: "" },
   ownerId: { type: String, default: "" },
+  quantity: { type: Number, required: true, min: 0, default: 1 },
   status: { type: String, enum: ["available", "sold"], default: "available" }
 }, { timestamps: true });
 const UserSchema = new mongoose.Schema({
@@ -150,7 +151,7 @@ async function getProducts() {
 }
 async function createProduct(data, user) {
   const product = {
-    title: data.title.trim(), price: Number(data.price), oldPrice: Number(data.oldPrice || 0),
+    title: data.title.trim(), price: Number(data.price), oldPrice: Number(data.oldPrice || 0), quantity: Number(data.quantity || 1),
     category: data.category.trim(), condition: data.condition || "Good",
     seller: user.name, initials: user.name.split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase(),
     location: String(data.location || "Campus").trim(),
@@ -197,6 +198,8 @@ app.post("/api/products", authRequired, uploadImages.array("images", 5), async (
     const { title, price, category } = req.body || {};
     if (typeof title !== "string" || title.trim().length < 3) return res.status(400).json({ message: "Item name must contain at least 3 characters." });
     if (!Number.isFinite(Number(price)) || Number(price) < 0) return res.status(400).json({ message: "Enter a valid price." });
+    const quantity = Number(req.body?.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) return res.status(400).json({ message: "Quantity must be a whole number between 1 and 10,000." });
     if (typeof category !== "string" || !category.trim()) return res.status(400).json({ message: "Choose a category." });
     const uploadedImages = (req.files || []).map((file) => `/uploads/${file.filename}`);
     const product = await createProduct({ ...req.body, images: uploadedImages }, req.user);
@@ -272,36 +275,45 @@ app.delete("/api/cart/:productId", authRequired, async (req, res, next) => {
 app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
   try {
     const productId = String(req.params.productId);
+    const quantity = Number(req.body?.quantity ?? 1);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return res.status(400).json({ message: "Choose a valid quantity." });
+    }
+
     let product;
     if (storageMode === "mongo") {
-      product = await mongoProduct.findOneAndUpdate(
-        { _id: productId, status: { $ne: "sold" } },
-        { $set: { status: "sold" } },
+      const current = await mongoProduct.findById(productId).lean();
+      if (!current) return res.status(404).json({ message: "Listing not found." });
+      if (String(current.ownerId) === String(req.user.id)) return res.status(400).json({ message: "You cannot buy your own listing." });
+      const available = Number(current.quantity ?? 1);
+      if (current.status === "sold" || available < quantity) {
+        return res.status(409).json({ message: available <= 0 ? "This item is sold out." : `Only ${available} available.` });
+      }
+      const updated = await mongoProduct.findOneAndUpdate(
+        { _id: productId, status: { $ne: "sold" }, quantity: { $gte: quantity } },
+        { $inc: { quantity: -quantity } },
         { new: true }
       );
-      if (!product) {
-        const exists = await mongoProduct.exists({ _id: productId });
-        return res.status(exists ? 409 : 404).json({ message: exists ? "This item has already been sold." : "Listing not found." });
+      if (!updated) return res.status(409).json({ message: "Stock changed. Refresh the listing and try again." });
+      if (updated.quantity <= 0) {
+        await mongoProduct.updateOne({ _id: productId, quantity: { $lte: 0 } }, { $set: { status: "sold" } });
+        updated.status = "sold";
+      } else {
+        updated.status = "available";
       }
-      product = cleanProduct(product);
+      product = cleanProduct(updated);
     } else {
       const db = await readJson();
       product = db.products.find((entry) => String(entry.id || entry._id) === productId);
       if (!product) return res.status(404).json({ message: "Listing not found." });
-      if (product.status === "sold") return res.status(409).json({ message: "This item has already been sold." });
       if (String(product.ownerId) === String(req.user.id)) return res.status(400).json({ message: "You cannot buy your own listing." });
-      product.status = "sold";
-      await writeJson(db);
-    }
-
-    if (String(product.ownerId) === String(req.user.id)) {
-      if (storageMode === "mongo") await mongoProduct.updateOne({ _id: productId }, { $set: { status: "available" } });
-      else {
-        const db = await readJson();
-        const item = db.products.find((entry) => String(entry.id || entry._id) === productId);
-        if (item) { item.status = "available"; await writeJson(db); }
+      const available = Number(product.quantity ?? 1);
+      if (product.status === "sold" || available < quantity) {
+        return res.status(409).json({ message: available <= 0 ? "This item is sold out." : `Only ${available} available.` });
       }
-      return res.status(400).json({ message: "You cannot buy your own listing." });
+      product.quantity = available - quantity;
+      product.status = product.quantity === 0 ? "sold" : "available";
+      await writeJson(db);
     }
 
     const order = {
@@ -309,6 +321,7 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
       productId,
       title: product.title,
       price: product.price,
+      quantity,
       image: product.image || "",
       buyerId: String(req.user.id),
       buyerName: String(req.user.name || "A CampusKart user"),
@@ -318,7 +331,7 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
     };
     const notification = {
       id: randomUUID(),
-      message: `${order.buyerName} purchased ${product.title}.`,
+      message: `${order.buyerName} purchased ${quantity} × ${product.title}.`,
       productId,
       orderId: order.id,
       read: false,
@@ -327,7 +340,7 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
 
     if (storageMode === "mongo") {
       await mongoUser.updateOne({ _id: req.user.id }, { $pull: { cart: productId }, $push: { orders: order } });
-      await mongoUser.updateOne({ _id: product.ownerId }, { $push: { notifications: notification } });
+      if (product.ownerId) await mongoUser.updateOne({ _id: product.ownerId }, { $push: { notifications: notification } });
     } else {
       const db = await readJson();
       const buyer = db.users.find((entry) => String(entry.id) === String(req.user.id));
@@ -339,7 +352,7 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
       if (seller) seller.notifications = [...(seller.notifications || []), notification];
       await writeJson(db);
     }
-    res.status(201).json({ order, notification: { message: "Purchase recorded." } });
+    res.status(201).json({ order, product, notification: { message: "Purchase recorded." } });
   } catch (error) { next(error); }
 });
 
