@@ -42,6 +42,7 @@ export default function App() {
   };
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   const selectCategory = (category) => { setActiveCategory(category); setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); };
+  const submitSearch = () => { setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); };
   const toggleFavorite = (id) => {
     setFavorites((current) => {
       const next = current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id];
@@ -143,6 +144,9 @@ export default function App() {
         onToggleDarkMode={() => setDarkMode((current) => !current)}
         user={user}
         cartCount={cartIds.length}
+        search={search}
+        setSearch={setSearch}
+        onSearch={submitSearch}
       />
       <main>
         {currentPage === "profile" || currentPage === "cart" ? (
@@ -158,7 +162,7 @@ export default function App() {
           />
         ) : (
           <>
-            <Hero search={search} setSearch={setSearch} onSearch={() => scrollTo("marketplace")} />
+            <Hero search={search} setSearch={setSearch} onSearch={submitSearch} />
             <Categories activeCategory={activeCategory} onCategory={selectCategory} onViewAll={() => { setActiveCategory("All"); setSearch(""); }} />
             <Marketplace
               products={products}
