@@ -8,10 +8,12 @@ import { randomUUID } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import multer from "multer";
 
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_FILE = path.join(__dirname, "data", "db.json");
+const UPLOAD_DIR = path.join(__dirname, "uploads");
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
 const JWT_SECRET = process.env.JWT_SECRET || "local-development-secret-change-me";
@@ -22,6 +24,24 @@ app.use(cors({ origin(origin, callback) {
   return callback(new Error("Origin not allowed by CORS"));
 }}));
 app.use(express.json({ limit: "1mb" }));
+await mkdir(UPLOAD_DIR, { recursive: true });
+app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "1d", immutable: true }));
+
+const imageStorage = multer.diskStorage({
+  destination: (_req, _file, callback) => callback(null, UPLOAD_DIR),
+  filename: (_req, file, callback) => {
+    const extensionByMime = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif", "image/avif": ".avif" };
+    callback(null, `${randomUUID()}${extensionByMime[file.mimetype] || ".img"}`);
+  }
+});
+const uploadImages = multer({
+  storage: imageStorage,
+  limits: { files: 5, fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(file.mimetype)) return callback(new Error("Use JPG, PNG, WebP, GIF, or AVIF image files."));
+    callback(null, true);
+  }
+});
 
 let storageMode = "json";
 let mongoProduct;
@@ -37,6 +57,7 @@ const ProductSchema = new mongoose.Schema({
   initials: { type: String, default: "CK" },
   location: { type: String, default: "Campus" },
   image: { type: String, default: "" },
+  images: { type: [String], default: [] },
   description: { type: String, default: "" },
   ownerId: { type: String, default: "" }
 }, { timestamps: true });
@@ -90,7 +111,9 @@ async function createProduct(data, user) {
     title: data.title.trim(), price: Number(data.price), oldPrice: Number(data.oldPrice || 0),
     category: data.category.trim(), condition: data.condition || "Good",
     seller: user.name, initials: user.name.split(/\s+/).map((s) => s[0]).join("").slice(0, 2).toUpperCase(),
-    location: String(data.location || "Campus").trim(), image: String(data.image || "").trim(),
+    location: String(data.location || "Campus").trim(),
+    images: Array.isArray(data.images) ? data.images : [],
+    image: (Array.isArray(data.images) && data.images[0]) || String(data.image || "").trim(),
     description: String(data.description || "").trim(), ownerId: user.id
   };
   if (storageMode === "mongo") {
@@ -122,13 +145,14 @@ app.get("/api/products/:id", async (req, res, next) => {
     res.json(item);
   } catch (error) { next(error); }
 });
-app.post("/api/products", authRequired, async (req, res, next) => {
+app.post("/api/products", authRequired, uploadImages.array("images", 5), async (req, res, next) => {
   try {
     const { title, price, category } = req.body || {};
     if (typeof title !== "string" || title.trim().length < 3) return res.status(400).json({ message: "Item name must contain at least 3 characters." });
     if (!Number.isFinite(Number(price)) || Number(price) < 0) return res.status(400).json({ message: "Enter a valid price." });
     if (typeof category !== "string" || !category.trim()) return res.status(400).json({ message: "Choose a category." });
-    const product = await createProduct(req.body, req.user);
+    const uploadedImages = (req.files || []).map((file) => `/uploads/${file.filename}`);
+    const product = await createProduct({ ...req.body, images: uploadedImages }, req.user);
     res.status(201).json(product);
   } catch (error) { next(error); }
 });
