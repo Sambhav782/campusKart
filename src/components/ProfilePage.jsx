@@ -21,7 +21,7 @@ function CartItem({ product, onRemove, onOpen }) {
 }
 
 /** Account sidebar and content shared by the /profile and /cart routes. */
-export default function ProfilePage({ user, cartProducts, activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onLogout, onBrowse }) {
+export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onLogout, onBrowse }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   const total = cartProducts.reduce((sum, product) => sum + Number(product.price || 0), 0);
   return (
@@ -35,6 +35,9 @@ export default function ProfilePage({ user, cartProducts, activeSection, onNavig
         <nav className="account-side-nav" aria-label="Account navigation">
           <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/profile"><span>♙</span> Profile overview</NavLink>
           <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/cart"><span>🛒</span> My cart <b>{cartProducts.length}</b></NavLink>
+          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/your-listings"><span>📦</span> Your listings <b>{myProducts.length}</b></NavLink>
+          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/orders"><span>🧾</span> Orders <b>{orders.length}</b></NavLink>
+          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/notifications"><span>🔔</span> Notifications <b>{notifications.filter((item) => !item.read).length}</b></NavLink>
         </nav>
         <div className="account-sidebar-bottom">
           <button className="signout-btn" onClick={onLogout}><span>↪</span> Sign out</button>
@@ -43,7 +46,7 @@ export default function ProfilePage({ user, cartProducts, activeSection, onNavig
 
       <section className="account-content">
         <div className="account-page-heading">
-          <div><span className="section-kicker">CampusKart account</span><h1>{activeSection === "cart" ? "My cart" : "Profile overview"}</h1><p>{activeSection === "cart" ? "Review the items you've saved for later." : "Manage your account and the items you want to buy."}</p></div>
+          <div><span className="section-kicker">CampusKart account</span><h1>{{cart:"My cart", listings:"Your listings", orders:"Orders", notifications:"Notifications"}[activeSection] || "Profile overview"}</h1><p>{{cart:"Review the items you've saved for later.", listings:"Manage the items you're selling on campus.", orders:"Items you have purchased.", notifications:"Updates about activity on your listings."}[activeSection] || "Manage your account and marketplace activity."}</p></div>
           {activeSection === "cart" && <span className="cart-total-count">{cartProducts.length} {cartProducts.length === 1 ? "item" : "items"}</span>}
         </div>
 
@@ -69,6 +72,27 @@ export default function ProfilePage({ user, cartProducts, activeSection, onNavig
               )}
             </section>
           </>
+        ) : activeSection === "listings" ? (
+          <section className="account-panel">
+            <div className="panel-heading"><div><h2>Your listings</h2><p>Items you have published for sale.</p></div><span className="cart-total-count">{myProducts.length} items</span></div>
+            {myProducts.length ? <div className="cart-list">{myProducts.map((product) => (
+              <article className="cart-item" key={product.id || product._id}>
+                <button className="cart-item-image" onClick={() => onOpenProduct(product)}><img src={assetUrl(product.images?.[0] || product.image) || "https://placehold.co/160x120?text=CampusKart"} alt={product.title} /></button>
+                <div className="cart-item-info"><strong>{product.title}</strong><span className="cart-item-category">{product.category} · {product.status === "sold" ? "Sold" : "Available"}</span><strong>₹{Number(product.price).toLocaleString("en-IN")}</strong></div>
+                <span className="account-status">{product.status === "sold" ? "Sold" : "For sale"}</span>
+              </article>
+            ))}</div> : <div className="cart-empty"><span>📦</span><h3>No listings yet</h3><p>Items you publish will appear here.</p><button className="primary-btn" onClick={onBrowse}>Browse marketplace</button></div>}
+          </section>
+        ) : activeSection === "orders" ? (
+          <section className="account-panel">
+            <div className="panel-heading"><div><h2>Your orders</h2><p>Purchases recorded on CampusKart. No payment is processed.</p></div></div>
+            {orders.length ? <div className="cart-list">{orders.map((order) => <article className="cart-item" key={order.id}><div className="cart-item-info"><strong>{order.title}</strong><span className="cart-item-category">{new Date(order.createdAt).toLocaleString()} · {order.status}</span><strong>₹{Number(order.price).toLocaleString("en-IN")}</strong></div></article>)}</div> : <div className="cart-empty"><span>🧾</span><h3>No orders yet</h3><p>Items you buy will appear here.</p><button className="primary-btn" onClick={onBrowse}>Browse marketplace</button></div>}
+          </section>
+        ) : activeSection === "notifications" ? (
+          <section className="account-panel">
+            <div className="panel-heading"><div><h2>Notifications</h2><p>Activity on your listings.</p></div></div>
+            {notifications.length ? <div className="cart-list">{[...notifications].reverse().map((notification) => <article className="cart-item" key={notification.id}><div className="cart-item-info"><strong>{notification.message}</strong><span className="cart-item-category">{new Date(notification.createdAt).toLocaleString()}</span></div></article>)}</div> : <div className="cart-empty"><span>🔔</span><h3>You're all caught up</h3><p>When someone buys your item, you'll see it here.</p></div>}
+          </section>
         ) : (
           <section className="account-panel">
             <div className="panel-heading"><div><h2>Saved items</h2><p>Items you've added to your cart.</p></div></div>
