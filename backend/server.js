@@ -394,6 +394,21 @@ app.get("/api/notifications", authRequired, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+app.post("/api/notifications/read", authRequired, async (req, res, next) => {
+  try {
+    if (storageMode === "mongo") {
+      await mongoUser.updateOne({ _id: req.user.id }, { $set: { "notifications.$[].read": true } });
+      const user = await mongoUser.findById(req.user.id).select("notifications").lean();
+      return res.json(user?.notifications || []);
+    }
+    const db = await readJson();
+    const user = db.users.find((entry) => String(entry.id) === String(req.user.id));
+    if (!user) return res.status(404).json({ message: "Account not found." });
+    user.notifications = (user.notifications || []).map((item) => ({ ...item, read: true }));
+    await writeJson(db);
+    res.json(user.notifications);
+  } catch (error) { next(error); }
+});
 app.use((error, _req, res, _next) => {
   console.error(error);
   if (error.code === 11000) return res.status(409).json({ message: "An account with this email already exists." });
