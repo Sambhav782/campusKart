@@ -57,7 +57,7 @@ npm run dev
 
 Open the local URL printed by Vite (usually `http://localhost:5173`).
 
-The frontend defaults to `http://localhost:5000/api`. To use a different API URL, create `.env` in the project root based on `src/.env.example` and set `VITE_API_URL`.
+The frontend defaults to `http://localhost:5000/api`. To use a different API URL, create `.env` in the project root based on `.env.example` and set `VITE_API_URL`.
 
 ## Optional MongoDB setup
 
