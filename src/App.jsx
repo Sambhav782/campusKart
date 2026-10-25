@@ -277,6 +277,7 @@ export default function App() {
         onRemoveFromCart={removeFromCart}
         onOpenProduct={openProduct}
         onBuyProduct={handleBuy}
+        onOpenNotifications={openNotifications}
         onLogout={handleLogout}
         onBrowse={() => goToExplore()}
       />
