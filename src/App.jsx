@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Categories from "./components/Categories";
 import Marketplace from "./components/Marketplace";
+import ExplorePage from "./components/ExplorePage";
 import TrustSection from "./components/TrustSection";
 import Footer from "./components/Footer";
 import ProfilePage from "./components/ProfilePage";
@@ -41,8 +42,8 @@ export default function App() {
     window.__campusKartToast = setTimeout(() => setToast(""), 2800);
   };
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  const selectCategory = (category) => { setActiveCategory(category); setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); };
-  const submitSearch = () => { setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); };
+  const selectCategory = (category) => { setActiveCategory(category); setCurrentPage("explore"); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const submitSearch = () => { setCurrentPage("explore"); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const toggleFavorite = (id) => {
     setFavorites((current) => {
       const next = current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id];
@@ -139,6 +140,7 @@ export default function App() {
         onProfile={() => user ? setCurrentPage("profile") : setShowLogin(true)}
         onNotify={(message) => notify(message || "You're all caught up.")}
         onHome={resetHome}
+        onExplore={() => { setCurrentPage("explore"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
         onHowItWorks={() => { setCurrentPage("home"); setTimeout(() => scrollTo("how-it-works"), 0); }}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode((current) => !current)}
@@ -160,22 +162,31 @@ export default function App() {
             onLogout={handleLogout}
             onBrowse={() => { setCurrentPage("home"); setTimeout(() => scrollTo("marketplace"), 0); }}
           />
+        ) : currentPage === "explore" ? (
+          <ExplorePage
+            products={products}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            search={search}
+            favorites={favorites}
+            onFavorite={toggleFavorite}
+            onOpen={setSelectedProduct}
+            onClear={() => { setSearch(""); setActiveCategory("All"); }}
+          />
         ) : (
           <>
             <Hero search={search} setSearch={setSearch} onSearch={submitSearch} />
-            <Categories activeCategory={activeCategory} onCategory={selectCategory} onViewAll={() => { setActiveCategory("All"); setSearch(""); }} />
+            <Categories activeCategory={activeCategory} onCategory={selectCategory} onViewAll={() => { setActiveCategory("All"); setSearch(""); setCurrentPage("explore"); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
             <Marketplace
               products={products}
-              activeCategory={activeCategory}
-              search={search}
+              activeCategory="All"
+              search=""
               favorites={favorites}
               onFavorite={toggleFavorite}
               onOpen={setSelectedProduct}
-              onFilter={() => notify("Use search and categories to narrow listings.")}
-              onSort={(event) => {
-                const mode = event.target.value;
-                setProducts((current) => [...current].sort((a, b) => mode === "Price: low to high" ? a.price - b.price : mode === "Newest first" ? new Date(b.createdAt || 0) - new Date(a.createdAt || 0) : 0));
-              }}
+              limit={4}
+              showFilters={false}
+              onViewAll={() => { setActiveCategory("All"); setSearch(""); setCurrentPage("explore"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
               onClear={() => { setSearch(""); setActiveCategory("All"); }}
             />
             <TrustSection onSell={() => { if (user) setShowSell(true); else setShowLogin(true); }} />
