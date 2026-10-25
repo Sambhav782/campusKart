@@ -75,7 +75,7 @@ export default function Navbar({
             {darkMode ? "☀" : "☾"}
           </button>
 
-          <button className="sell-btn" onClick={onSell}>＋ Sell an item</button>
+          <button className="sell-btn sell-icon-btn" onClick={onSell} title="Sell an item" aria-label="Sell an item">＋</button>
 
           <button
             className="profile-btn"
