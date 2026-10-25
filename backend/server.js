@@ -326,7 +326,6 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
       buyerId: String(req.user.id),
       buyerName: String(req.user.name || "A CampusKart user"),
       sellerId: String(product.ownerId),
-      productSnapshot: { title: product.title, price: product.price, image: product.image || "", category: product.category || "" },
       status: "Purchased",
       createdAt: new Date().toISOString()
     };
@@ -402,8 +401,8 @@ app.post("/api/orders/bulk", authRequired, async (req, res, next) => {
         purchased = current;
         await writeJson(db);
       }
-      const order = { id: randomUUID(), productId: String(purchased.id || purchased._id), quantity: 1, buyerId: String(req.user.id), buyerName: String(req.user.name || "A CampusKart user"), sellerId: String(purchased.ownerId), productSnapshot: { title: purchased.title, price: purchased.price, image: purchased.image || "", category: purchased.category || "" }, status: "Purchased", createdAt: now };
-      orders.push({ ...order, product: { id: order.productId, ...order.productSnapshot, status: purchased.status } });
+      const order = { id: randomUUID(), productId: String(purchased.id || purchased._id), quantity: 1, buyerId: String(req.user.id), buyerName: String(req.user.name || "A CampusKart user"), sellerId: String(purchased.ownerId), status: "Purchased", createdAt: now };
+      orders.push({ ...order, product: { id: order.productId, title: purchased.title, price: purchased.price, image: purchased.image || "", category: purchased.category || "", status: purchased.status } });
       if (purchased.ownerId) sellerNotifications.push({ sellerId: String(purchased.ownerId), notification: { id: randomUUID(), message: `${order.buyerName} purchased 1 × ${purchased.title}.`, productId: order.productId, orderId: order.id, read: false, createdAt: now } });
     }
     if (storageMode === "mongo") {
@@ -440,12 +439,11 @@ app.get("/api/orders", authRequired, async (req, res, next) => {
     const byId = new Map(products.map((product) => [String(product.id || product._id), product]));
     res.json(orders.map((order) => {
       const product = byId.get(String(order.productId));
-      const snapshot = order.productSnapshot || {};
       return { ...order, product: product ? {
         id: String(product.id || product._id), title: product.title, price: product.price,
-        image: product.image || "", category: product.category,
+        image: product.image || "", images: product.images || [], category: product.category,
         status: product.status || (Number(product.quantity ?? 1) > 0 ? "available" : "sold")
-      } : (snapshot.title ? { id: String(order.productId), ...snapshot, status: "sold" } : null) };
+      } : null };
     }));
   } catch (error) { next(error); }
 });
