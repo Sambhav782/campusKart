@@ -1,6 +1,7 @@
 import React from "react";
 import Marketplace from "./Marketplace";
 
+/** Dedicated /explore route: all listings, filters, and sorting. */
 export default function ExplorePage(props) {
   return (
     <div className="explore-page">
@@ -9,6 +10,7 @@ export default function ExplorePage(props) {
         <h1>Explore</h1>
         <p>Browse campus finds, compare prices, and discover something useful.</p>
       </div>
+
       <Marketplace {...props} showFilters={true} pageTitle="All listings" />
     </div>
   );
