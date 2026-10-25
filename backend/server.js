@@ -59,13 +59,16 @@ const ProductSchema = new mongoose.Schema({
   image: { type: String, default: "" },
   images: { type: [String], default: [] },
   description: { type: String, default: "" },
-  ownerId: { type: String, default: "" }
+  ownerId: { type: String, default: "" },
+  status: { type: String, enum: ["available", "sold"], default: "available" }
 }, { timestamps: true });
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
-  cart: { type: [String], default: [] }
+  cart: { type: [String], default: [] },
+  orders: { type: [mongoose.Schema.Types.Mixed], default: [] },
+  notifications: { type: [mongoose.Schema.Types.Mixed], default: [] }
 }, { timestamps: true });
 
 function getModels() {
@@ -173,6 +176,11 @@ function authRequired(req, res, next) {
 }
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", storage: storageMode }));
+app.get("/api/my-products", authRequired, async (req, res, next) => {
+  try { res.json((await getProducts()).filter((product) => String(product.ownerId) === String(req.user.id))); }
+  catch (error) { next(error); }
+});
+
 app.get("/api/products", async (_req, res, next) => {
   try { res.json(await getProducts()); } catch (error) { next(error); }
 });
@@ -256,6 +264,106 @@ app.delete("/api/cart/:productId", authRequired, async (req, res, next) => {
     const cart = await updateUserCart(req.user.id, String(req.params.productId), "remove");
     if (!cart) return res.status(404).json({ message: "Account not found." });
     res.json(await getUserCart(req.user.id));
+  } catch (error) { next(error); }
+});
+
+
+// A simulated purchase: no payment is collected by CampusKart.
+app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
+  try {
+    const productId = String(req.params.productId);
+    let product;
+    if (storageMode === "mongo") {
+      product = await mongoProduct.findOneAndUpdate(
+        { _id: productId, status: { $ne: "sold" } },
+        { $set: { status: "sold" } },
+        { new: true }
+      );
+      if (!product) {
+        const exists = await mongoProduct.exists({ _id: productId });
+        return res.status(exists ? 409 : 404).json({ message: exists ? "This item has already been sold." : "Listing not found." });
+      }
+      product = cleanProduct(product);
+    } else {
+      const db = await readJson();
+      product = db.products.find((entry) => String(entry.id || entry._id) === productId);
+      if (!product) return res.status(404).json({ message: "Listing not found." });
+      if (product.status === "sold") return res.status(409).json({ message: "This item has already been sold." });
+      if (String(product.ownerId) === String(req.user.id)) return res.status(400).json({ message: "You cannot buy your own listing." });
+      product.status = "sold";
+      await writeJson(db);
+    }
+
+    if (String(product.ownerId) === String(req.user.id)) {
+      if (storageMode === "mongo") await mongoProduct.updateOne({ _id: productId }, { $set: { status: "available" } });
+      else {
+        const db = await readJson();
+        const item = db.products.find((entry) => String(entry.id || entry._id) === productId);
+        if (item) { item.status = "available"; await writeJson(db); }
+      }
+      return res.status(400).json({ message: "You cannot buy your own listing." });
+    }
+
+    const order = {
+      id: randomUUID(),
+      productId,
+      title: product.title,
+      price: product.price,
+      image: product.image || "",
+      buyerId: String(req.user.id),
+      buyerName: String(req.user.name || "A CampusKart user"),
+      sellerId: String(product.ownerId),
+      status: "Purchased",
+      createdAt: new Date().toISOString()
+    };
+    const notification = {
+      id: randomUUID(),
+      message: `${order.buyerName} purchased ${product.title}.`,
+      productId,
+      orderId: order.id,
+      read: false,
+      createdAt: order.createdAt
+    };
+
+    if (storageMode === "mongo") {
+      await mongoUser.updateOne({ _id: req.user.id }, { $pull: { cart: productId }, $push: { orders: order } });
+      await mongoUser.updateOne({ _id: product.ownerId }, { $push: { notifications: notification } });
+    } else {
+      const db = await readJson();
+      const buyer = db.users.find((entry) => String(entry.id) === String(req.user.id));
+      const seller = db.users.find((entry) => String(entry.id) === String(product.ownerId));
+      if (buyer) {
+        buyer.cart = (buyer.cart || []).filter((id) => String(id) !== productId);
+        buyer.orders = [...(buyer.orders || []), order];
+      }
+      if (seller) seller.notifications = [...(seller.notifications || []), notification];
+      await writeJson(db);
+    }
+    res.status(201).json({ order, notification: { message: "Purchase recorded." } });
+  } catch (error) { next(error); }
+});
+
+app.get("/api/orders", authRequired, async (req, res, next) => {
+  try {
+    if (storageMode === "mongo") {
+      const user = await mongoUser.findById(req.user.id).select("orders").lean();
+      return res.json(user?.orders || []);
+    }
+    const db = await readJson();
+    const user = db.users.find((entry) => String(entry.id) === String(req.user.id));
+    res.json(user?.orders || []);
+  } catch (error) { next(error); }
+});
+
+app.get("/api/notifications", authRequired, async (req, res, next) => {
+  try {
+    if (storageMode === "mongo") {
+      const user = await mongoUser.findById(req.user.id).select("notifications").lean();
+      return res.json(user?.notifications || []);
+    }
+    const db = await readJson();
+    const user = db.users.find((entry) => String(entry.id) === String(req.user.id));
+    res.json(user?.notifications || []);
   } catch (error) { next(error); }
 });
 
