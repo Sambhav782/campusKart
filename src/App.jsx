@@ -48,7 +48,9 @@ export default function App() {
   // Favorites remain browser-local; the authenticated user's cart lives on the backend.
   const [favorites, setFavorites] = useState(() => readStoredArray("campuskart_favorites"));
   const [cartProducts, setCartProducts] = useState([]);
-  const [cartLoading, setCartLoading] = useState(false);
+  const [myProducts, setMyProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(readStoredUser);
   const [apiOnline, setApiOnline] = useState(false);
@@ -178,6 +180,8 @@ export default function App() {
           setUser(data.user);
           localStorage.setItem("campuskart_user", JSON.stringify(data.user));
           setCartProducts(await apiRequest("/cart"));
+          const [mine, purchases, alerts] = await Promise.all([apiRequest("/my-products"), apiRequest("/orders"), apiRequest("/notifications")]);
+          setMyProducts(mine); setOrders(purchases); setNotifications(alerts);
         })
         .catch(() => {
           if (!active) return;
@@ -200,7 +204,8 @@ export default function App() {
     localStorage.setItem("campuskart_token", result.token);
     localStorage.setItem("campuskart_user", JSON.stringify(result.user));
     setUser(result.user);
-    setCartProducts(await apiRequest("/cart"));
+    const [cart, mine, purchases, alerts] = await Promise.all([apiRequest("/cart"), apiRequest("/my-products"), apiRequest("/orders"), apiRequest("/notifications")]);
+    setCartProducts(cart); setMyProducts(mine); setOrders(purchases); setNotifications(alerts);
     setShowLogin(false);
     notify(`Welcome ${result.user.name}!`);
   }
@@ -211,15 +216,28 @@ export default function App() {
 
     const saved = await apiRequest("/products", { method: "POST", body: form });
     setProducts((current) => [saved, ...current]);
+    setMyProducts((current) => [saved, ...current]);
     setShowSell(false);
     notify("Your listing has been published.");
+  }
+
+  async function handleBuy(product) {
+    if (!user) { setShowLogin(true); notify("Sign in to buy this item."); return; }
+    try {
+      const result = await apiRequest(`/orders/${encodeURIComponent(product.id || product._id)}`, { method: "POST" });
+      setCartProducts((current) => current.filter((item) => String(item.id || item._id) !== String(product.id || product._id)));
+      setProducts((current) => current.map((item) => String(item.id || item._id) === String(product.id || product._id) ? { ...item, status: "sold" } : item));
+      setOrders((current) => [result.order, ...current]);
+      setSelectedProduct(null);
+      notify("Purchase recorded. No payment was taken.");
+    } catch (error) { notify(error.message || "Could not complete purchase."); }
   }
 
   function handleLogout() {
     localStorage.removeItem("campuskart_token");
     localStorage.removeItem("campuskart_user");
     setUser(null);
-    setCartProducts([]);
+    setCartProducts([]); setMyProducts([]); setOrders([]); setNotifications([]);
     navigate("/");
     notify("You have signed out.");
   }
@@ -230,6 +248,9 @@ export default function App() {
       <ProfilePage
         user={user}
         cartProducts={cartProducts}
+        myProducts={myProducts}
+        orders={orders}
+        notifications={notifications}
         activeSection={section}
         onNavigate={(page) => navigate(`/${page}`)}
         onRemoveFromCart={removeFromCart}
@@ -309,6 +330,9 @@ export default function App() {
 
           <Route path="/profile" element={user ? renderAccountPage("profile") : <Navigate to="/" replace />} />
           <Route path="/cart" element={user ? renderAccountPage("cart") : <Navigate to="/" replace />} />
+          <Route path="/your-listings" element={user ? renderAccountPage("listings") : <Navigate to="/" replace />} />
+          <Route path="/orders" element={user ? renderAccountPage("orders") : <Navigate to="/" replace />} />
+          <Route path="/notifications" element={user ? renderAccountPage("notifications") : <Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -322,6 +346,7 @@ export default function App() {
           onClose={() => setSelectedProduct(null)}
           onMessage={() => notify("Seller messaging is not implemented yet.")}
           onAddToCart={() => addToCart(selectedProduct)}
+          onBuy={() => handleBuy(selectedProduct)}
           isInCart={cartProducts.some((product) => String(product.id || product._id) === String(selectedProduct.id || selectedProduct._id))}
         />
       )}
