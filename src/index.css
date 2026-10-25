@@ -130,3 +130,32 @@
 .form-modal { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
 .form-modal .form-grid { min-width: 0; }
 .form-modal textarea { min-height: 100px; }
+
+
+/* Marketplace search in the navbar */
+.nav-search { display: flex; align-items: center; gap: 7px; width: clamp(180px, 22vw, 285px); min-width: 0; height: 40px; padding: 4px 5px 4px 11px; margin-right: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.nav-search > span { color: #8a93a4; font-size: 22px; line-height: 1; }
+.nav-search input { flex: 1; min-width: 0; width: 100%; margin: 0; padding: 5px 0; border: 0; outline: 0; background: transparent; font-size: 12px; }
+.nav-search-submit { padding: 7px 10px; border-radius: 8px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; }
+.nav-search-clear { color: #7b8494; font-size: 18px; line-height: 1; padding: 4px; }
+.dark-mode .nav-search { background: #111827; border-color: #364156; }
+.dark-mode .nav-search input { background: transparent; color: #edf2ff; }
+@media (max-width: 1050px) {
+  .nav-search { width: clamp(150px, 26vw, 260px); }
+}
+@media (max-width: 760px) {
+  .nav-inner { gap: 10px; }
+  .nav-search { width: auto; flex: 1; margin-left: auto; }
+  .nav-search-submit { display: none; }
+  .nav-search input { font-size: 11px; }
+  .nav-actions { flex: 0 0 auto; gap: 7px; }
+  .nav-actions .sell-btn { font-size: 0; padding: 9px 11px; }
+  .nav-actions .sell-btn::first-letter { font-size: 14px; }
+}
+@media (max-width: 420px) {
+  .brand { gap: 6px; font-size: 16px; }
+  .brand-mark { width: 30px; height: 30px; }
+  .nav-search { padding-left: 7px; gap: 4px; }
+  .nav-search > span { font-size: 18px; }
+  .nav-search input { font-size: 10px; }
+}
