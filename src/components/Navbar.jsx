@@ -17,6 +17,8 @@ export default function Navbar({
   onToggleDarkMode,
   user,
   cartCount = 0,
+  notificationCount = 0,
+  onNotifications,
   search,
   setSearch,
   onSearch,
@@ -75,6 +77,9 @@ export default function Navbar({
             {darkMode ? "☀" : "☾"}
           </button>
 
+          <button className="notification-btn" onClick={onNotifications} title="Notifications" aria-label={`Notifications${notificationCount ? `, ${notificationCount} unread` : ""}`}>
+            ♧{notificationCount > 0 && <span className="notification-count">{notificationCount > 9 ? "9+" : notificationCount}</span>}
+          </button>
           <button className="sell-btn sell-icon-btn" onClick={onSell} title="Sell an item" aria-label="Sell an item">＋</button>
 
           <button
