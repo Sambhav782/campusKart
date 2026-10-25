@@ -44,7 +44,7 @@ export default function ProductDetailPage({ products, user, cartProducts, onBuy,
           <button className="primary-btn" disabled={soldOut || ownListing} onClick={() => onBuy(product, quantity)}>{soldOut ? "Sold out" : ownListing ? "Your listing" : "Buy now"}</button>
           <button className="secondary-btn" disabled={soldOut || inCart || ownListing} onClick={() => onAddToCart(product)}>{inCart ? "✓ In cart" : "Add to cart"}</button>
         </div>
-        <button className="chat-seller-btn" onClick={() => notify("Chat with seller is a work in progress.")}>Chat with seller <span>↗</span></button>
+        <button className="chat-seller-btn" onClick={() => notify("Work in progress")}>Chat with seller <span>↗</span></button>
         <p className="detail-note">No online payment is collected. Purchase details are recorded in your account.</p>
       </div>
     </div>
