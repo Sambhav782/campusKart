@@ -1,6 +1,8 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 import { assetUrl } from "../lib/api";
 
+/** A compact listing row used in both the cart and profile preview. */
 function CartItem({ product, onRemove, onOpen }) {
   const image = product.images?.[0] || product.image;
   return (
@@ -18,6 +20,7 @@ function CartItem({ product, onRemove, onOpen }) {
   );
 }
 
+/** Account sidebar and content shared by the /profile and /cart routes. */
 export default function ProfilePage({ user, cartProducts, activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onLogout, onBrowse }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   const total = cartProducts.reduce((sum, product) => sum + Number(product.price || 0), 0);
@@ -30,8 +33,8 @@ export default function ProfilePage({ user, cartProducts, activeSection, onNavig
           <span><strong>{user?.name || "CampusKart user"}</strong><small>{user?.email || ""}</small></span>
         </div>
         <nav className="account-side-nav" aria-label="Account navigation">
-          <button className={activeSection === "profile" ? "selected" : ""} onClick={() => onNavigate("profile")}> <span>♙</span> Profile overview</button>
-          <button className={activeSection === "cart" ? "selected" : ""} onClick={() => onNavigate("cart")}> <span>🛒</span> My cart <b>{cartProducts.length}</b></button>
+          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/profile"><span>♙</span> Profile overview</NavLink>
+          <NavLink className={({ isActive }) => isActive ? "selected" : ""} to="/cart"><span>🛒</span> My cart <b>{cartProducts.length}</b></NavLink>
         </nav>
         <div className="account-sidebar-bottom">
           <button className="signout-btn" onClick={onLogout}><span>↪</span> Sign out</button>
