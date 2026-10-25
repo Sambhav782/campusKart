@@ -2870,3 +2870,28 @@ input,textarea,.form-grid select {
   .cart-item-actions { flex-direction: column; align-items: stretch; }
   .cart-buy-btn, .remove-cart-btn { padding: 8px 10px; }
 }
+
+
+.chat-seller-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .18s ease, border-color .18s ease;
+}
+.chat-seller-btn:hover {
+  background: #f4f7ff;
+  border-color: #c8d5ff;
+}
+.chat-seller-btn span { color: var(--blue); font-size: 16px; }
+.dark-mode .chat-seller-btn { color: #edf2ff; border-color: #364156; }
+.dark-mode .chat-seller-btn:hover { background: #202e49; }
