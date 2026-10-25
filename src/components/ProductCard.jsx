@@ -1,20 +1,21 @@
 import React from "react";
 import { assetUrl } from "../lib/api";
 
-export default function ProductCard({ product, onAddToCart, onOpen }) {
+export default function ProductCard({ product, isInCart = false, onToggleCart, onOpen }) {
   const discount = product.oldPrice > 0 ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
   const image = product.images?.[0] || product.image;
 
   return (
     <article className="product-card">
       <button
-        className="heart"
+        className={`heart${isInCart ? " in-cart" : ""}`}
         type="button"
-        title="Add to cart"
-        aria-label={`Add ${product.title} to cart`}
-        disabled={product.status === "sold" || Number(product.quantity ?? 1) <= 0}
-        onClick={() => onAddToCart(product)}
-      >♡</button>
+        title={isInCart ? "Remove from cart" : "Add to cart"}
+        aria-label={isInCart ? `Remove ${product.title} from cart` : `Add ${product.title} to cart`}
+        disabled={!isInCart && (product.status === "sold" || Number(product.quantity ?? 1) <= 0)}
+        aria-pressed={isInCart}
+        onClick={() => onToggleCart(product)}
+      >{isInCart ? "♥" : "♡"}</button>
       <button className="product-image" onClick={() => onOpen(product)}>
         <img src={assetUrl(image) || "https://placehold.co/600x400?text=CampusKart"} alt={product.title} />
         <span className="condition">{product.condition}</span>
