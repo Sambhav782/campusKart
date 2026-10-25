@@ -14,7 +14,7 @@ export function Modal({ title, onClose, children }) {
   );
 }
 
-export function ProductModal({ product, onClose, onMessage, onAddToCart, isInCart = false }) {
+export function ProductModal({ product, onClose, onMessage, onAddToCart, onBuy, isInCart = false }) {
   const images = product.images?.length ? product.images : product.image ? [product.image] : [];
   const [activeImage, setActiveImage] = useState(0);
   useEffect(() => setActiveImage(0), [product.id]);
@@ -33,7 +33,7 @@ export function ProductModal({ product, onClose, onMessage, onAddToCart, isInCar
           <div className="modal-price">₹{Number(product.price).toLocaleString("en-IN")} {Number(product.oldPrice) > 0 && <del>₹{Number(product.oldPrice).toLocaleString("en-IN")}</del>}</div>
           <p>{product.description || "Connect with the seller to ask questions and arrange a convenient campus handoff."}</p>
           <div className="seller-detail"><span className="avatar">{product.initials || "CK"}</span><div><b>{product.seller}</b><small>{product.location}</small></div></div>
-          <div className="product-actions"><button className="primary-btn" onClick={onMessage}>Contact seller</button><button className="secondary-btn" onClick={onAddToCart} disabled={isInCart}>{isInCart ? "✓ Added to cart" : "＋ Add to cart"}</button></div>
+          <div className="product-actions"><button className="primary-btn" onClick={onBuy} disabled={product.status === "sold" || String(product.ownerId) === String(JSON.parse(localStorage.getItem("campuskart_user") || "{}").id)}>{product.status === "sold" ? "Sold" : "Buy"}</button><button className="secondary-btn" onClick={onAddToCart} disabled={isInCart || product.status === "sold"}>{isInCart ? "✓ Added to cart" : "＋ Add to cart"}</button><button className="secondary-btn" onClick={onMessage}>Contact seller</button></div>
         </div>
       </div>
     </div>
