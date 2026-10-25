@@ -64,7 +64,8 @@ const ProductSchema = new mongoose.Schema({
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  passwordHash: { type: String, required: true }
+  passwordHash: { type: String, required: true },
+  cart: { type: [String], default: [] }
 }, { timestamps: true });
 
 function getModels() {
@@ -87,6 +88,44 @@ async function writeJson(db) {
 function cleanUser(user) {
   if (!user) return null;
   return { id: String(user._id || user.id), name: user.name, email: user.email };
+}
+
+async function getUserCart(userId) {
+  if (storageMode === "mongo") {
+    const user = await mongoUser.findById(userId).select("cart").lean();
+    if (!user) return [];
+    const ids = user.cart || [];
+    const products = await mongoProduct.find({ _id: { $in: ids } }).lean();
+    const byId = new Map(products.map((product) => [String(product._id), cleanProduct(product)]));
+    return ids.map((id) => byId.get(String(id))).filter(Boolean);
+  }
+  const db = await readJson();
+  const user = db.users.find((entry) => String(entry.id) === String(userId));
+  if (!user) return [];
+  const byId = new Map(db.products.map((product) => [String(product.id || product._id), product]));
+  return (user.cart || []).map((id) => byId.get(String(id))).filter(Boolean);
+}
+
+async function updateUserCart(userId, productId, action) {
+  if (storageMode === "mongo") {
+    const user = await mongoUser.findById(userId);
+    if (!user) return null;
+    const cart = (user.cart || []).map(String);
+    user.cart = action === "add"
+      ? (cart.includes(String(productId)) ? cart : [...cart, String(productId)])
+      : cart.filter((id) => id !== String(productId));
+    await user.save();
+    return user.cart;
+  }
+  const db = await readJson();
+  const user = db.users.find((entry) => String(entry.id) === String(userId));
+  if (!user) return null;
+  const cart = (user.cart || []).map(String);
+  user.cart = action === "add"
+    ? (cart.includes(String(productId)) ? cart : [...cart, String(productId)])
+    : cart.filter((id) => id !== String(productId));
+  await writeJson(db);
+  return user.cart;
 }
 function cleanProduct(product) {
   if (!product) return null;
@@ -171,7 +210,7 @@ app.post("/api/auth/register", async (req, res, next) => {
       user = await mongoUser.create({ name, email, passwordHash });
     } else {
       const db = await readJson();
-      user = { id: randomUUID(), name, email, passwordHash, createdAt: new Date().toISOString() };
+      user = { id: randomUUID(), name, email, passwordHash, cart: [], createdAt: new Date().toISOString() };
       db.users.push(user);
       await writeJson(db);
     }
@@ -192,6 +231,33 @@ app.post("/api/auth/login", async (req, res, next) => {
   } catch (error) { next(error); }
 });
 app.get("/api/auth/me", authRequired, (req, res) => res.json({ user: req.user }));
+
+// The cart is owned by the authenticated account, not by browser localStorage.
+app.get("/api/cart", authRequired, async (req, res, next) => {
+  try { res.json(await getUserCart(req.user.id)); }
+  catch (error) { next(error); }
+});
+
+app.post("/api/cart/:productId", authRequired, async (req, res, next) => {
+  try {
+    const productId = String(req.params.productId);
+    const products = await getProducts();
+    if (!products.some((product) => String(product.id || product._id) === productId)) {
+      return res.status(404).json({ message: "Listing not found." });
+    }
+    const cart = await updateUserCart(req.user.id, productId, "add");
+    if (!cart) return res.status(404).json({ message: "Account not found." });
+    res.json(await getUserCart(req.user.id));
+  } catch (error) { next(error); }
+});
+
+app.delete("/api/cart/:productId", authRequired, async (req, res, next) => {
+  try {
+    const cart = await updateUserCart(req.user.id, String(req.params.productId), "remove");
+    if (!cart) return res.status(404).json({ message: "Account not found." });
+    res.json(await getUserCart(req.user.id));
+  } catch (error) { next(error); }
+});
 
 app.use((error, _req, res, _next) => {
   console.error(error);
