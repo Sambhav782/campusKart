@@ -6,16 +6,16 @@ import { assetUrl } from "../lib/api";
 function CartItem({ product, onRemove, onOpen, onBuy }) {
   const image = product.images?.[0] || product.image;
   return (
-    <article className="cart-item">
-      <button className="cart-item-image" onClick={() => onOpen(product)} aria-label={`View ${product.title}`}>
+    <article className="cart-item cart-item-clickable" role="button" tabIndex={0} onClick={() => onOpen(product)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onOpen(product); } }}>
+      <button className="cart-item-image" onClick={(event) => { event.stopPropagation(); onOpen(product); }} aria-label={`View ${product.title}`}>
         <img src={assetUrl(image) || "https://placehold.co/160x120?text=CampusKart"} alt={product.title} />
       </button>
       <div className="cart-item-info">
-        <button className="cart-item-title" onClick={() => onOpen(product)}>{product.title}</button>
+        <button className="cart-item-title" onClick={(event) => { event.stopPropagation(); onOpen(product); }}>{product.title}</button>
         <span className="cart-item-category">{product.category} · {product.condition || "Good"}</span>
         <strong>₹{Number(product.price).toLocaleString("en-IN")}</strong>
       </div>
-      <div className="cart-item-actions"><button className="cart-buy-btn" disabled={product.status === "sold" || Number(product.quantity ?? 1) <= 0 || (product.ownerId && String(product.ownerId) === String(JSON.parse(localStorage.getItem("campuskart_user") || "{}").id))} onClick={() => onBuy(product, 1)}>Buy</button><button className="remove-cart-btn" onClick={() => onRemove(product.id || product._id)}>Remove</button></div>
+      <div className="cart-item-actions"><button className="cart-buy-btn" onClick={(event) => event.stopPropagation()} disabled={product.status === "sold" || Number(product.quantity ?? 1) <= 0 || (product.ownerId && String(product.ownerId) === String(JSON.parse(localStorage.getItem("campuskart_user") || "{}").id))} onClick={() => onBuy(product, 1)}>Buy</button><button className="remove-cart-btn" onClick={(event) => { event.stopPropagation(); onRemove(product.id || product._id); }}>Remove</button></div>
     </article>
   );
 }
