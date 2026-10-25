@@ -173,7 +173,7 @@ export default function App() {
 
     if (localStorage.getItem("campuskart_token")) {
       apiRequest("/auth/me")
-        .then((data) => {
+        .then(async (data) => {
           if (!active) return;
           setUser(data.user);
           localStorage.setItem("campuskart_user", JSON.stringify(data.user));
