@@ -163,6 +163,16 @@ export default function App() {
     }
   }
 
+  async function toggleCart(product) {
+    const id = String(product.id || product._id);
+    const alreadyInCart = cartProducts.some((item) => String(item.id || item._id) === id);
+    if (alreadyInCart) {
+      await removeFromCart(id);
+      return;
+    }
+    await addToCart(product);
+  }
+
   // Load live listings and restore the session when the app starts.
   useEffect(() => {
     let active = true;
@@ -363,7 +373,8 @@ export default function App() {
                   products={products}
                   activeCategory="All"
                   search=""
-                  onAddToCart={addToCart}
+                  cartProducts={cartProducts}
+                  onToggleCart={toggleCart}
                   onOpen={openProduct}
                   limit={4}
                   showFilters={false}
