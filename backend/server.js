@@ -322,10 +322,7 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
     const order = {
       id: randomUUID(),
       productId,
-      title: product.title,
-      price: product.price,
       quantity,
-      image: product.image || "",
       buyerId: String(req.user.id),
       buyerName: String(req.user.name || "A CampusKart user"),
       sellerId: String(product.ownerId),
@@ -361,13 +358,27 @@ app.post("/api/orders/:productId", authRequired, async (req, res, next) => {
 
 app.get("/api/orders", authRequired, async (req, res, next) => {
   try {
+    let orders;
+    let products;
     if (storageMode === "mongo") {
       const user = await mongoUser.findById(req.user.id).select("orders").lean();
-      return res.json(user?.orders || []);
+      orders = user?.orders || [];
+      products = await getProducts();
+    } else {
+      const db = await readJson();
+      const user = db.users.find((entry) => String(entry.id) === String(req.user.id));
+      orders = user?.orders || [];
+      products = db.products;
     }
-    const db = await readJson();
-    const user = db.users.find((entry) => String(entry.id) === String(req.user.id));
-    res.json(user?.orders || []);
+    const byId = new Map(products.map((product) => [String(product.id || product._id), product]));
+    res.json(orders.map((order) => {
+      const product = byId.get(String(order.productId));
+      return { ...order, product: product ? {
+        id: String(product.id || product._id), title: product.title, price: product.price,
+        image: product.image || "", category: product.category,
+        status: product.status || (Number(product.quantity ?? 1) > 0 ? "available" : "sold")
+      } : null };
+    }));
   } catch (error) { next(error); }
 });
 
