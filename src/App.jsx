@@ -45,11 +45,9 @@ export default function App() {
   const [showSell, setShowSell] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
-  // Browser-local preferences and cart data.
+  // Favorites are browser-local. Cart contents are isolated per signed-in account.
   const [favorites, setFavorites] = useState(() => readStoredArray("campuskart_favorites"));
-  const [cartIds, setCartIds] = useState(() =>
-    readStoredArray("campuskart_cart").map(String)
-  );
+  const [cartIds, setCartIds] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(readStoredUser);
   const [apiOnline, setApiOnline] = useState(false);
@@ -100,6 +98,14 @@ export default function App() {
     setShowSell(true);
   }
 
+  // Give every signed-in account its own browser-local cart.
+  // This prevents different accounts using the same browser from sharing items.
+  const cartStorageKey = user?.id ? `campuskart_cart_${user.id}` : null;
+
+  useEffect(() => {
+    setCartIds(cartStorageKey ? readStoredArray(cartStorageKey).map(String) : []);
+  }, [cartStorageKey]);
+
   // Persist favorites whenever a product is liked or unliked.
   function toggleFavorite(id) {
     setFavorites((current) => {
@@ -128,7 +134,7 @@ export default function App() {
 
     setCartIds((current) => {
       const next = [...current, id];
-      localStorage.setItem("campuskart_cart", JSON.stringify(next));
+      if (cartStorageKey) localStorage.setItem(cartStorageKey, JSON.stringify(next));
       return next;
     });
     notify("Added to your cart.");
@@ -137,7 +143,7 @@ export default function App() {
   function removeFromCart(productId) {
     setCartIds((current) => {
       const next = current.filter((id) => id !== String(productId));
-      localStorage.setItem("campuskart_cart", JSON.stringify(next));
+      if (cartStorageKey) localStorage.setItem(cartStorageKey, JSON.stringify(next));
       return next;
     });
     notify("Item removed from your cart.");
