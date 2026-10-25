@@ -40,8 +40,6 @@ export default function Navbar({
         <nav className="nav-links" aria-label="Main navigation">
           <NavLink to="/" end onClick={onHome}>Home</NavLink>
           <NavLink to="/explore" onClick={onExplore}>Explore</NavLink>
-          <button onClick={onHowItWorks}>How it works</button>
-          <button onClick={() => onNotify("Community features are coming next.")}>Community</button>
         </nav>
 
         {/* Search always opens the Explore results page. */}
