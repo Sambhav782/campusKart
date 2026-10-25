@@ -12,7 +12,7 @@ CampusKart is a campus-first marketplace prototype where students can discover a
 - Use MongoDB when a valid `MONGODB_URI` is configured and the database is reachable.
 - Fall back to JSON storage if MongoDB is not configured or cannot connect.
 
-**Prototype limitations:** This is a learning/demo project, not production-ready marketplace infrastructure. Seller messaging, payments, email verification, password reset, image uploads, moderation, and account-management screens are not implemented. Favorites currently persist in the browser only. Use HTTPS and a strong `JWT_SECRET` before deploying.
+**Prototype limitations:** This is a learning/demo project, not production-ready marketplace infrastructure. Seller messaging, payments, email verification, password reset, moderation, and account-management screens are not implemented. Listing forms support up to five local image uploads (5 MB each); uploaded files are stored on the backend filesystem. Favorites currently persist in the browser only. Use HTTPS and a strong `JWT_SECRET` before deploying.
 
 ## Tech stack
 
