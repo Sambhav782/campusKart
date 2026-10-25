@@ -2586,3 +2586,51 @@ input,textarea,.form-grid select {
   background: #202e49;
   color: #91adff;
 }
+
+
+/* Compact plus-only action in the top bar. */
+.nav-actions .sell-icon-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 27px;
+  line-height: 1;
+}
+.stock-badge {
+  position: absolute;
+  left: 11px;
+  top: 11px;
+  z-index: 2;
+  background: #ffffffed;
+  color: #2458d6;
+  border: 1px solid #dbe5ff;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.stock-badge.sold-badge {
+  color: #b42318;
+  border-color: #f3c6c2;
+  background: #fff5f4;
+}
+.stock-count {
+  color: #2458d6;
+  font-weight: 700;
+  font-size: 13px;
+  margin: 8px 0 14px;
+}
+.buy-quantity-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.buy-quantity-label select {
+  min-width: 64px;
+}
