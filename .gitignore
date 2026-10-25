@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+backend/node_modules/
 
 # Build output
 dist/
@@ -9,6 +10,8 @@ build/
 .env
 .env.*
 !.env.example
+backend/.env
+src/.env
 
 # Debug logs
 npm-debug.log*
