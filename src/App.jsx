@@ -277,6 +277,23 @@ export default function App() {
     } catch (error) { notify(error.message || "Could not complete purchase."); }
   }
 
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm("Delete your CampusKart account permanently? This will also delete all listings you published. This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      await apiRequest("/account", { method: "DELETE" });
+      localStorage.removeItem("campuskart_token");
+      localStorage.removeItem("campuskart_user");
+      setUser(null);
+      setCartProducts([]); setMyProducts([]); setOrders([]); setNotifications([]);
+      setProducts((current) => current.filter((product) => String(product.ownerId) !== String(user?.id)));
+      navigate("/");
+      notify("Your account and listings have been deleted.");
+    } catch (error) {
+      notify(error.message || "Could not delete your account.");
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem("campuskart_token");
     localStorage.removeItem("campuskart_user");
@@ -303,6 +320,7 @@ export default function App() {
         onBuyAll={handleBuyAll}
         onOpenNotifications={openNotifications}
         onLogout={handleLogout}
+        onDeleteAccount={handleDeleteAccount}
         onBrowse={() => goToExplore()}
       />
     );
