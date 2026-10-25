@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { assetUrl } from "../lib/api";
 
 /** A compact listing row used in both the cart and profile preview. */
-function CartItem({ product, onRemove, onOpen }) {
+function CartItem({ product, onRemove, onOpen, onBuy }) {
   const image = product.images?.[0] || product.image;
   return (
     <article className="cart-item">
@@ -15,13 +15,13 @@ function CartItem({ product, onRemove, onOpen }) {
         <span className="cart-item-category">{product.category} · {product.condition || "Good"}</span>
         <strong>₹{Number(product.price).toLocaleString("en-IN")}</strong>
       </div>
-      <button className="remove-cart-btn" onClick={() => onRemove(product.id || product._id)}>Remove</button>
+      <div className="cart-item-actions"><button className="cart-buy-btn" disabled={product.status === "sold" || Number(product.quantity ?? 1) <= 0 || (product.ownerId && String(product.ownerId) === String(JSON.parse(localStorage.getItem("campuskart_user") || "{}").id))} onClick={() => onBuy(product, 1)}>Buy</button><button className="remove-cart-btn" onClick={() => onRemove(product.id || product._id)}>Remove</button></div>
     </article>
   );
 }
 
 /** Account sidebar and content shared by the /profile and /cart routes. */
-export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onLogout, onBrowse }) {
+export default function ProfilePage({ user, cartProducts, myProducts = [], orders = [], notifications = [], activeSection, onNavigate, onRemoveFromCart, onOpenProduct, onBuyProduct, onLogout, onBrowse }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   const total = cartProducts.reduce((sum, product) => sum + Number(product.price || 0), 0);
   return (
@@ -64,7 +64,7 @@ export default function ProfilePage({ user, cartProducts, myProducts = [], order
               <div className="panel-heading"><div><h2>Your cart</h2><p>Items you've added to your cart.</p></div><button className="text-btn" onClick={() => onNavigate("cart")}>View cart →</button></div>
               {cartProducts.length ? (
                 <>
-                  <div className="cart-list">{cartProducts.slice(0, 3).map((product) => <CartItem key={product.id || product._id} product={product} onRemove={onRemoveFromCart} onOpen={onOpenProduct} />)}</div>
+                  <div className="cart-list">{cartProducts.slice(0, 3).map((product) => <CartItem key={product.id || product._id} product={product} onRemove={onRemoveFromCart} onOpen={onOpenProduct} onBuy={onBuyProduct} />)}</div>
                   {cartProducts.length > 3 && <button className="secondary-btn cart-view-all" onClick={() => onNavigate("cart")}>View all {cartProducts.length} items</button>}
                 </>
               ) : (
