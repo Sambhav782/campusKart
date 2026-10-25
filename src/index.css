@@ -734,8 +734,22 @@ button {
   box-shadow:0 4px 15px #17203312
 }
 
-.heart:hover {
-  color:#e45269
+.heart:hover,
+.heart.in-cart {
+  color: #e6395b;
+}
+
+.heart.in-cart {
+  background: #fff0f3;
+}
+
+.heart.in-cart:hover {
+  color: #c91f42;
+}
+
+.heart:disabled {
+  opacity: .45;
+  cursor: not-allowed;
 }
 
 .product-image {
