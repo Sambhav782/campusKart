@@ -1,13 +1,20 @@
 import React from "react";
 import { assetUrl } from "../lib/api";
 
-export default function ProductCard({ product, favorite, onFavorite, onOpen }) {
+export default function ProductCard({ product, onAddToCart, onOpen }) {
   const discount = product.oldPrice > 0 ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
   const image = product.images?.[0] || product.image;
 
   return (
     <article className="product-card">
-      <button className="heart" onClick={() => onFavorite(product.id)}>{favorite ? "♥" : "♡"}</button>
+      <button
+        className="heart"
+        type="button"
+        title="Add to cart"
+        aria-label={`Add ${product.title} to cart`}
+        disabled={product.status === "sold" || Number(product.quantity ?? 1) <= 0}
+        onClick={() => onAddToCart(product)}
+      >♡</button>
       <button className="product-image" onClick={() => onOpen(product)}>
         <img src={assetUrl(image) || "https://placehold.co/600x400?text=CampusKart"} alt={product.title} />
         <span className="condition">{product.condition}</span>
