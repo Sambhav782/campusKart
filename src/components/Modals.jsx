@@ -17,7 +17,10 @@ export function Modal({ title, onClose, children }) {
 export function ProductModal({ product, onClose, onMessage, onAddToCart, onBuy, isInCart = false }) {
   const images = product.images?.length ? product.images : product.image ? [product.image] : [];
   const [activeImage, setActiveImage] = useState(0);
-  useEffect(() => setActiveImage(0), [product.id]);
+  const [buyQuantity, setBuyQuantity] = useState(1);
+  const availableQuantity = Math.max(0, Number(product.quantity ?? 1));
+  const isSoldOut = product.status === "sold" || availableQuantity === 0;
+  useEffect(() => { setActiveImage(0); setBuyQuantity(1); }, [product.id]);
   const displayedImage = images[activeImage];
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
@@ -31,9 +34,10 @@ export function ProductModal({ product, onClose, onMessage, onAddToCart, onBuy, 
           <span className="product-category">{product.category}</span>
           <h2>{product.title}</h2>
           <div className="modal-price">₹{Number(product.price).toLocaleString("en-IN")} {Number(product.oldPrice) > 0 && <del>₹{Number(product.oldPrice).toLocaleString("en-IN")}</del>}</div>
+          <p className="stock-count" aria-live="polite">{isSoldOut ? "Sold out" : `${availableQuantity} available`}</p>
           <p>{product.description || "Connect with the seller to ask questions and arrange a convenient campus handoff."}</p>
           <div className="seller-detail"><span className="avatar">{product.initials || "CK"}</span><div><b>{product.seller}</b><small>{product.location}</small></div></div>
-          <div className="product-actions"><button className="primary-btn" onClick={onBuy} disabled={product.status === "sold" || String(product.ownerId) === String(JSON.parse(localStorage.getItem("campuskart_user") || "{}").id)}>{product.status === "sold" ? "Sold" : "Buy"}</button><button className="secondary-btn" onClick={onAddToCart} disabled={isInCart || product.status === "sold"}>{isInCart ? "✓ Added to cart" : "＋ Add to cart"}</button><button className="secondary-btn" onClick={onMessage}>Contact seller</button></div>
+          <div className="product-actions">{!isSoldOut && <label className="buy-quantity-label">Quantity<select value={buyQuantity} onChange={(event) => setBuyQuantity(Number(event.target.value))}>{Array.from({ length: availableQuantity }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count}</option>)}</select></label>}<button className="primary-btn" onClick={() => onBuy(buyQuantity)} disabled={isSoldOut || String(product.ownerId) === String(JSON.parse(localStorage.getItem("campuskart_user") || "{}").id)}>{isSoldOut ? "Sold out" : "Buy"}</button><button className="secondary-btn" onClick={onAddToCart} disabled={isInCart || isSoldOut}>{isInCart ? "✓ Added to cart" : "＋ Add to cart"}</button><button className="secondary-btn" onClick={onMessage}>Contact seller</button></div>
         </div>
       </div>
     </div>
@@ -41,7 +45,7 @@ export function ProductModal({ product, onClose, onMessage, onAddToCart, onBuy, 
 }
 
 export function SellModal({ onClose, onPublish }) {
-  const [form, setForm] = useState({ title: "", category: "Books", price: "", oldPrice: "", condition: "Good", location: "", description: "" });
+  const [form, setForm] = useState({ title: "", category: "Books", price: "", oldPrice: "", quantity: "1", condition: "Good", location: "", description: "" });
   const [photos, setPhotos] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [error, setError] = useState("");
@@ -83,6 +87,7 @@ export function SellModal({ onClose, onPublish }) {
           <label>Category<select name="category" value={form.category} onChange={change}><option>Books</option><option>Electronics</option><option>Furniture</option><option>Hostel Essentials</option><option>Accessories</option><option>Clothing</option></select></label>
           <label>Price (₹)<input name="price" value={form.price} onChange={change} type="number" min="0" step="1" placeholder="500" required /></label>
           <label>Original price (₹)<input name="oldPrice" value={form.oldPrice} onChange={change} type="number" min="0" step="1" placeholder="Optional" /></label>
+          <label>Available quantity<input name="quantity" value={form.quantity} onChange={change} type="number" min="1" max="10000" step="1" required /></label>
           <label>Condition<select name="condition" value={form.condition} onChange={change}><option>Like New</option><option>Excellent</option><option>Good</option><option>Fair</option></select></label>
           <label>Campus location<input name="location" value={form.location} onChange={change} placeholder="e.g. Hostel Block A" /></label>
           <div className="full-field photo-upload-field">
