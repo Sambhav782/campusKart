@@ -8,7 +8,8 @@ export default function Marketplace({ products, activeCategory, search, favorite
     const query = search.trim().toLowerCase();
     return products.filter((product) =>
       (activeCategory === "All" || product.category === activeCategory) &&
-      (!query || [product.title, product.category, product.seller, product.location].some((value) => value.toLowerCase().includes(query)))
+      (!query || [product.title, product.category, product.seller, product.location, product.description, product.condition]
+        .some((value) => String(value || "").toLowerCase().includes(query)))
     );
   }, [products, activeCategory, search]);
 
