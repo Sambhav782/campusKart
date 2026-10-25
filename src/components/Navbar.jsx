@@ -1,6 +1,6 @@
 import React from "react";
 // Top navigation and main actions.
-export default function Navbar({ onSell, onLogin, onProfile, onNotify, onHome, onHowItWorks, darkMode, onToggleDarkMode, user, cartCount = 0, search, setSearch, onSearch }) {
+export default function Navbar({ onSell, onLogin, onProfile, onNotify, onHome, onExplore, onHowItWorks, darkMode, onToggleDarkMode, user, cartCount = 0, search, setSearch, onSearch }) {
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
   return (
     <header className="navbar">
@@ -11,7 +11,8 @@ export default function Navbar({ onSell, onLogin, onProfile, onNotify, onHome, o
         </button>
 
         <nav className="nav-links">
-          <button className="active" onClick={onHome}>Marketplace</button>
+          <button onClick={onHome}>Home</button>
+          <button className="active" onClick={onExplore}>Explore</button>
           <button onClick={onHowItWorks}>How it works</button>
           <button onClick={() => onNotify("Community features are coming next.")}>Community</button>
         </nav>
