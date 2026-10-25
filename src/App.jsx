@@ -254,6 +254,29 @@ export default function App() {
     } catch (error) { notify(error.message || "Could not complete purchase."); }
   }
 
+  async function handleBuyAll() {
+    if (!user) { setShowLogin(true); notify("Sign in to buy these items."); return; }
+    if (!cartProducts.length) { notify("Your cart is empty."); return; }
+    try {
+      const result = await apiRequest("/orders/bulk", { method: "POST" });
+      const purchasedIds = new Set(result.orders.map((order) => String(order.productId)));
+      setCartProducts([]);
+      setOrders((current) => [...result.orders, ...current]);
+      setProducts((current) => current.map((product) => {
+        if (!purchasedIds.has(String(product.id || product._id))) return product;
+        const remaining = Math.max(0, Number(product.quantity ?? 1) - 1);
+        return { ...product, quantity: remaining, status: remaining <= 0 ? "sold" : "available" };
+      }).filter((product) => Number(product.quantity ?? 1) > 0 && product.status !== "sold"));
+      setMyProducts((current) => current.map((product) => {
+        if (!purchasedIds.has(String(product.id || product._id))) return product;
+        const remaining = Math.max(0, Number(product.quantity ?? 1) - 1);
+        return { ...product, quantity: remaining, status: remaining <= 0 ? "sold" : "available" };
+      }));
+      notify(`Purchase recorded for ${result.orders.length} ${result.orders.length === 1 ? "item" : "items"}. No payment was taken.`);
+      navigate("/orders");
+    } catch (error) { notify(error.message || "Could not complete purchase."); }
+  }
+
   function handleLogout() {
     localStorage.removeItem("campuskart_token");
     localStorage.removeItem("campuskart_user");
@@ -277,6 +300,7 @@ export default function App() {
         onRemoveFromCart={removeFromCart}
         onOpenProduct={openProduct}
         onBuyProduct={handleBuy}
+        onBuyAll={handleBuyAll}
         onOpenNotifications={openNotifications}
         onLogout={handleLogout}
         onBrowse={() => goToExplore()}
