@@ -13,6 +13,7 @@ import TrustSection from "./components/TrustSection";
 import Footer from "./components/Footer";
 import ProfilePage from "./components/ProfilePage";
 import { ProductModal, SellModal, LoginModal } from "./components/Modals";
+import ProductDetailPage from "./components/ProductDetailPage";
 
 // Read persisted data safely so malformed localStorage does not crash the app.
 function readStoredArray(key) {
@@ -61,6 +62,11 @@ export default function App() {
     setToast(message);
     clearTimeout(window.__campusKartToast);
     window.__campusKartToast = setTimeout(() => setToast(""), 2800);
+  }
+
+  function openProduct(product) {
+    navigate(`/product/${encodeURIComponent(String(product.id || product._id))}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function scrollToSection(id) {
@@ -258,7 +264,7 @@ export default function App() {
         activeSection={section}
         onNavigate={(page) => navigate(`/${page}`)}
         onRemoveFromCart={removeFromCart}
-        onOpenProduct={setSelectedProduct}
+        onOpenProduct={openProduct}
         onLogout={handleLogout}
         onBrowse={() => goToExplore()}
       />
@@ -303,7 +309,7 @@ export default function App() {
                   search=""
                   favorites={favorites}
                   onFavorite={toggleFavorite}
-                  onOpen={setSelectedProduct}
+                  onOpen={openProduct}
                   limit={4}
                   showFilters={false}
                   onViewAll={() => goToExplore()}
@@ -323,7 +329,7 @@ export default function App() {
                 search={search}
                 favorites={favorites}
                 onFavorite={toggleFavorite}
-                onOpen={setSelectedProduct}
+                onOpen={openProduct}
                 onClear={() => {
                   setSearch("");
                   setActiveCategory("All");
@@ -332,6 +338,7 @@ export default function App() {
             }
           />
 
+          <Route path="/product/:productId" element={<ProductDetailPage products={products} user={user} cartProducts={cartProducts} onBuy={handleBuy} onAddToCart={addToCart} notify={notify} />} />
           <Route path="/profile" element={user ? renderAccountPage("profile") : <Navigate to="/" replace />} />
           <Route path="/cart" element={user ? renderAccountPage("cart") : <Navigate to="/" replace />} />
           <Route path="/your-listings" element={user ? renderAccountPage("listings") : <Navigate to="/" replace />} />
@@ -343,17 +350,7 @@ export default function App() {
 
       <Footer onFeedback={() => notify("Thanks for the feedback!")} />
 
-      {/* Modals are outside Routes so they work from any page. */}
-      {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onMessage={() => notify("Seller messaging is not implemented yet.")}
-          onAddToCart={() => addToCart(selectedProduct)}
-          onBuy={(quantity) => handleBuy(selectedProduct, quantity)}
-          isInCart={cartProducts.some((product) => String(product.id || product._id) === String(selectedProduct.id || selectedProduct._id))}
-        />
-      )}
+      {/* Shared account and listing dialogs remain available on every route. */}
       {showSell && <SellModal onClose={() => setShowSell(false)} onPublish={handlePublish} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onLogin={handleAuth} />}
       {toast && <div className="toast"><span>✓</span>{toast}</div>}
