@@ -45,9 +45,10 @@ export default function App() {
   const [showSell, setShowSell] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
-  // Favorites are browser-local. Cart contents are isolated per signed-in account.
+  // Favorites remain browser-local; the authenticated user's cart lives on the backend.
   const [favorites, setFavorites] = useState(() => readStoredArray("campuskart_favorites"));
-  const [cartIds, setCartIds] = useState([]);
+  const [cartProducts, setCartProducts] = useState([]);
+  const [cartLoading, setCartLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(readStoredUser);
   const [apiOnline, setApiOnline] = useState(false);
@@ -98,13 +99,20 @@ export default function App() {
     setShowSell(true);
   }
 
-  // Give every signed-in account its own browser-local cart.
-  // This prevents different accounts using the same browser from sharing items.
-  const cartStorageKey = user?.id ? `campuskart_cart_${user.id}` : null;
-
-  useEffect(() => {
-    setCartIds(cartStorageKey ? readStoredArray(cartStorageKey).map(String) : []);
-  }, [cartStorageKey]);
+  async function refreshCart() {
+    if (!localStorage.getItem("campuskart_token")) {
+      setCartProducts([]);
+      return;
+    }
+    setCartLoading(true);
+    try {
+      setCartProducts(await apiRequest("/cart"));
+    } catch (error) {
+      notify(error.message || "Could not load your cart.");
+    } finally {
+      setCartLoading(false);
+    }
+  }
 
   // Persist favorites whenever a product is liked or unliked.
   function toggleFavorite(id) {
@@ -119,34 +127,32 @@ export default function App() {
     });
   }
 
-  function addToCart(product) {
+  async function addToCart(product) {
     if (!user) {
       setShowLogin(true);
       notify("Sign in to add items to your cart.");
       return;
     }
-
     const id = String(product.id || product._id);
-    if (cartIds.includes(id)) {
+    if (cartProducts.some((item) => String(item.id || item._id) === id)) {
       notify("This item is already in your cart.");
       return;
     }
-
-    setCartIds((current) => {
-      const next = [...current, id];
-      if (cartStorageKey) localStorage.setItem(cartStorageKey, JSON.stringify(next));
-      return next;
-    });
-    notify("Added to your cart.");
+    try {
+      setCartProducts(await apiRequest(`/cart/${encodeURIComponent(id)}`, { method: "POST" }));
+      notify("Added to your cart.");
+    } catch (error) {
+      notify(error.message || "Could not add this item.");
+    }
   }
 
-  function removeFromCart(productId) {
-    setCartIds((current) => {
-      const next = current.filter((id) => id !== String(productId));
-      if (cartStorageKey) localStorage.setItem(cartStorageKey, JSON.stringify(next));
-      return next;
-    });
-    notify("Item removed from your cart.");
+  async function removeFromCart(productId) {
+    try {
+      setCartProducts(await apiRequest(`/cart/${encodeURIComponent(productId)}`, { method: "DELETE" }));
+      notify("Item removed from your cart.");
+    } catch (error) {
+      notify(error.message || "Could not remove this item.");
+    }
   }
 
   // Load live listings and restore the session when the app starts.
@@ -171,6 +177,7 @@ export default function App() {
           if (!active) return;
           setUser(data.user);
           localStorage.setItem("campuskart_user", JSON.stringify(data.user));
+          setCartProducts(await apiRequest("/cart"));
         })
         .catch(() => {
           if (!active) return;
@@ -193,6 +200,7 @@ export default function App() {
     localStorage.setItem("campuskart_token", result.token);
     localStorage.setItem("campuskart_user", JSON.stringify(result.user));
     setUser(result.user);
+    setCartProducts(await apiRequest("/cart"));
     setShowLogin(false);
     notify(`Welcome ${result.user.name}!`);
   }
@@ -211,13 +219,10 @@ export default function App() {
     localStorage.removeItem("campuskart_token");
     localStorage.removeItem("campuskart_user");
     setUser(null);
+    setCartProducts([]);
     navigate("/");
     notify("You have signed out.");
   }
-
-  const cartProducts = products.filter((product) =>
-    cartIds.includes(String(product.id || product._id))
-  );
 
   // The same account component serves both /profile and /cart.
   function renderAccountPage(section) {
@@ -249,7 +254,7 @@ export default function App() {
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode((current) => !current)}
         user={user}
-        cartCount={cartIds.length}
+        cartCount={cartProducts.length}
         search={search}
         setSearch={setSearch}
         onSearch={submitSearch}
@@ -317,7 +322,7 @@ export default function App() {
           onClose={() => setSelectedProduct(null)}
           onMessage={() => notify("Seller messaging is not implemented yet.")}
           onAddToCart={() => addToCart(selectedProduct)}
-          isInCart={cartIds.includes(String(selectedProduct.id || selectedProduct._id))}
+          isInCart={cartProducts.some((product) => String(product.id || product._id) === String(selectedProduct.id || selectedProduct._id))}
         />
       )}
       {showSell && <SellModal onClose={() => setShowSell(false)} onPublish={handlePublish} />}
