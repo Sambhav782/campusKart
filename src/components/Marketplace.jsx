@@ -5,7 +5,7 @@ import { categories } from "../data/products";
 /** Homepage shows a small preview; Explore shows all listings and filters. */
 
 export default function Marketplace({
-  products, activeCategory = "All", search = "", favorites = [], onFavorite, onOpen,
+  products, activeCategory = "All", search = "", onAddToCart, onOpen,
   onClear, limit, showFilters = true, onViewAll, pageTitle = "Explore listings",
   pageDescription, onCategoryChange
 }) {
@@ -75,7 +75,7 @@ export default function Marketplace({
       {visibleProducts.length ? (
         <div className="product-grid">
           {visibleProducts.map((product) => (
-            <ProductCard key={product.id || product._id} product={product} favorite={favorites.map(String).includes(String(product.id || product._id))} onFavorite={onFavorite} onOpen={onOpen} />
+            <ProductCard key={product.id || product._id} product={product} onAddToCart={onAddToCart} onOpen={onOpen} />
           ))}
         </div>
       ) : (
