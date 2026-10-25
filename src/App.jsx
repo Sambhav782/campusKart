@@ -227,6 +227,17 @@ export default function App() {
     notify("Your listing has been published.");
   }
 
+  async function openNotifications() {
+    if (!user) { setShowLogin(true); return; }
+    navigate("/notifications");
+    try {
+      const updated = await apiRequest("/notifications/read", { method: "POST" });
+      setNotifications(updated);
+    } catch (error) {
+      notify(error.message || "Could not update notifications.");
+    }
+  }
+
   async function handleBuy(product, quantity = 1) {
     if (!user) { setShowLogin(true); notify("Sign in to buy this item."); return; }
     try {
@@ -280,14 +291,13 @@ export default function App() {
         onLogin={() => setShowLogin(true)}
         onProfile={() => user ? navigate("/profile") : setShowLogin(true)}
         onNotify={(message) => notify(message || "You're all caught up.")}
-        onNotifications={() => user ? navigate("/notifications") : setShowLogin(true)}
+        onNotifications={openNotifications}
         onHome={resetHome}
         onExplore={() => goToExplore(activeCategory, search)}
         onHowItWorks={showHowItWorks}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode((current) => !current)}
         user={user}
-        cartCount={cartProducts.length}
         notificationCount={notifications.filter((item) => !item.read).length}
         search={search}
         setSearch={setSearch}
